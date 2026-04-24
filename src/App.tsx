@@ -19,7 +19,7 @@ interface ClientData {
 
 export default function App() {
   const [tab, setTab] = useState<'prov' | 'lima' | 'almacen'>('prov');
-  const [clientData, setClientData] = useState<ClientData>({ nombre: "", celular: "", dni: "", provincia: "", depto: "", sede: "Shalom", ubicacion: "", distrito: "", codigoPublicidad: "R-D" });
+  const [clientData, setClientData] = useState<ClientData>({ nombre: "", celular: "", dni: "", provincia: "", depto: "", sede: "Shalom", ubicacion: "", distrito: "", codigoPublicidad: "Live" });
   const [cuentaData, setCuentaData] = useState({ tipo: 'contra', pago: "", debe: "" });
   const [products, setProducts] = useState<any[]>([]);
   const [customComboName, setCustomComboName] = useState("");
@@ -35,7 +35,7 @@ export default function App() {
   };
 
   const clearAll = () => {
-    setClientData({ nombre: "", celular: "", dni: "", provincia: "", depto: "", sede: "Shalom", ubicacion: "", distrito: "", codigoPublicidad: "R-D" });
+    setClientData({ nombre: "", celular: "", dni: "", provincia: "", depto: "", sede: "Shalom", ubicacion: "", distrito: "", codigoPublicidad: "Live" });
     setCuentaData({ tipo: 'contra', pago: "", debe: "" });
     setProducts([]);
     setCustomComboName("");
@@ -208,7 +208,7 @@ export default function App() {
           `😎 Departamento: ${clientData.depto}\n` +
           `📌SEDE de agencia: *(${clientData.sede || 'Shalom'})*` +
           buildCuentaBlock() + getProductString() +
-          `\n\nCADENITA DE REGALO 🎁\n\nVENDEDOR SANDRO\n\n⏰ Te enviarán tu voucher entre 48 a 72 horas máximo`;
+          `\n\nCADENITA DE REGALO 🎁\n\nVENDEDOR VALENTINO\n\n⏰ Te enviarán tu voucher entre 48 a 72 horas máximo`;
     } else if (tab === 'lima') {
       t = `➖OVERSHARK — DATOS DELIVERY 🏍️🏍️\n` +
           `🫵🏻Nombre: ${clientData.nombre}\n` +
@@ -216,14 +216,14 @@ export default function App() {
           `😎 Distrito: ${clientData.distrito}\n` +
           `📌Ubicacion: ${clientData.ubicacion}` +
           buildCuentaBlock() + getProductString() +
-          `\n\nCADENITA DE REGALO 🎁\n\nVENDEDOR SANDRO\n\n⏰ Los pedidos salen al día siguiente entre las 11 AM y a lo largo de la tarde/noche del día`;
+          `\n\nCADENITA DE REGALO 🎁\n\nVENDEDOR VALENTINO\n\n⏰ Los pedidos salen al día siguiente entre las 11 AM y a lo largo de la tarde/noche del día`;
     } else {
       t = `➖OVERSHARK — RECOJO EN ALMACÉN 🏭🏭\n` +
           `🫵🏻Nombre: ${clientData.nombre}\n` +
           `📲 Celular: ${clientData.celular}\n` +
           `💳Numero DNI : ${clientData.dni}\n` +
           buildCuentaBlock() + getProductString() +
-          `\n\nCADENITA DE REGALO 🎁\n\nVENDEDOR SANDRO`;
+          `\n\nCADENITA DE REGALO 🎁\n\nVENDEDOR VALENTINO`;
     }
     return t.replace(/\s+$/, "");
   })();
@@ -288,7 +288,7 @@ export default function App() {
       nom: clientData.nombre,
       dni: clientData.dni,
       hora,
-      codigoPublicidad: clientData.codigoPublicidad || "R-D",
+      codigoPublicidad: clientData.codigoPublicidad || "Live",
       marcaLabel: "OVER",
       limaMark: tab === "lima" ? "X" : "",
       provMark: tab === "prov" ? "X" : "",

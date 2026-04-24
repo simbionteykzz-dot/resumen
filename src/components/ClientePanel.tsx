@@ -146,7 +146,7 @@ export default function ClientePanel({ tab, data, onChange }: any) {
             <label>NÚMERO DNI</label>
             <input value={data.dni} onChange={e => onChange('dni', e.target.value)} placeholder="12345678" className="form-input" />
             <label>CÓDIGO DE PUBLICIDAD</label>
-            <input value={data.codigoPublicidad} onChange={e => onChange('codigoPublicidad', e.target.value)} placeholder="R-D" className="form-input" />
+            <input value={data.codigoPublicidad} onChange={e => onChange('codigoPublicidad', e.target.value)} placeholder="Live" className="form-input" />
             <label>DEPARTAMENTO</label>
             <input value={data.provincia} onChange={e => onChange('provincia', e.target.value)} placeholder="Ej. La Libertad" className="form-input" />
             <label>PROVINCIA</label>
@@ -223,7 +223,7 @@ export default function ClientePanel({ tab, data, onChange }: any) {
             <label>DNI</label>
             <input value={data.dni} onChange={e => onChange('dni', e.target.value)} placeholder="12345678" className="form-input" />
             <label>CÓDIGO DE PUBLICIDAD</label>
-            <input value={data.codigoPublicidad} onChange={e => onChange('codigoPublicidad', e.target.value)} placeholder="R-D" className="form-input" />
+            <input value={data.codigoPublicidad} onChange={e => onChange('codigoPublicidad', e.target.value)} placeholder="Live" className="form-input" />
             <label>UBICACIÓN EN TIEMPO REAL (MANDAR)</label>
             <input value={data.ubicacion} onChange={e => handleUbicacion(e.target.value)} placeholder="Link o referencia de ubicación" className="form-input" />
             
@@ -282,7 +282,7 @@ export default function ClientePanel({ tab, data, onChange }: any) {
             <label>NÚMERO DNI</label>
             <input value={data.dni} onChange={e => onChange('dni', e.target.value)} placeholder="12345678" className="form-input" />
             <label>CÓDIGO DE PUBLICIDAD</label>
-            <input value={data.codigoPublicidad} onChange={e => onChange('codigoPublicidad', e.target.value)} placeholder="R-D" className="form-input" />
+            <input value={data.codigoPublicidad} onChange={e => onChange('codigoPublicidad', e.target.value)} placeholder="Live" className="form-input" />
           </div>
         </div>
       )}
