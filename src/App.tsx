@@ -14,12 +14,12 @@ import { Trash2, PackagePlus, Store, Bike, Package, Truck } from 'lucide-react';
 import { POL_PRECIOS_OVERSHARK, ENVIO_PROVINCIA_SOLES, ENVIO_LIMA_SOLES, POL_VARIANTES_OVERSHARK } from './lib/data';
 
 interface ClientData {
-  nombre: string; celular: string; dni: string; provincia: string; depto: string; sede: string; ubicacion: string; distrito: string;
+  nombre: string; celular: string; dni: string; provincia: string; depto: string; sede: string; ubicacion: string; distrito: string; codigoPublicidad: string;
 }
 
 export default function App() {
   const [tab, setTab] = useState<'prov' | 'lima' | 'almacen'>('prov');
-  const [clientData, setClientData] = useState<ClientData>({ nombre: "", celular: "", dni: "", provincia: "", depto: "", sede: "Shalom", ubicacion: "", distrito: "" });
+  const [clientData, setClientData] = useState<ClientData>({ nombre: "", celular: "", dni: "", provincia: "", depto: "", sede: "Shalom", ubicacion: "", distrito: "", codigoPublicidad: "R-D" });
   const [cuentaData, setCuentaData] = useState({ tipo: 'contra', pago: "", debe: "" });
   const [products, setProducts] = useState<any[]>([]);
   const [customComboName, setCustomComboName] = useState("");
@@ -35,7 +35,7 @@ export default function App() {
   };
 
   const clearAll = () => {
-    setClientData({ nombre: "", celular: "", dni: "", provincia: "", depto: "", sede: "Shalom", ubicacion: "", distrito: "" });
+    setClientData({ nombre: "", celular: "", dni: "", provincia: "", depto: "", sede: "Shalom", ubicacion: "", distrito: "", codigoPublicidad: "R-D" });
     setCuentaData({ tipo: 'contra', pago: "", debe: "" });
     setProducts([]);
     setCustomComboName("");
@@ -208,7 +208,7 @@ export default function App() {
           `😎 Departamento: ${clientData.depto}\n` +
           `📌SEDE de agencia: *(${clientData.sede || 'Shalom'})*` +
           buildCuentaBlock() + getProductString() +
-          `\n\nCADENITA DE REGALO 🎁\n\nVENDEDOR VALENTINO\n\n⏰ Te enviarán tu voucher entre 48 a 72 horas máximo`;
+          `\n\nCADENITA DE REGALO 🎁\n\nVENDEDOR SANDRO\n\n⏰ Te enviarán tu voucher entre 48 a 72 horas máximo`;
     } else if (tab === 'lima') {
       t = `➖OVERSHARK — DATOS DELIVERY 🏍️🏍️\n` +
           `🫵🏻Nombre: ${clientData.nombre}\n` +
@@ -216,14 +216,14 @@ export default function App() {
           `😎 Distrito: ${clientData.distrito}\n` +
           `📌Ubicacion: ${clientData.ubicacion}` +
           buildCuentaBlock() + getProductString() +
-          `\n\nCADENITA DE REGALO 🎁\n\nVENDEDOR VALENTINO\n\n⏰ Los pedidos salen al día siguiente entre las 11 AM y a lo largo de la tarde/noche del día`;
+          `\n\nCADENITA DE REGALO 🎁\n\nVENDEDOR SANDRO\n\n⏰ Los pedidos salen al día siguiente entre las 11 AM y a lo largo de la tarde/noche del día`;
     } else {
       t = `➖OVERSHARK — RECOJO EN ALMACÉN 🏭🏭\n` +
           `🫵🏻Nombre: ${clientData.nombre}\n` +
           `📲 Celular: ${clientData.celular}\n` +
           `💳Numero DNI : ${clientData.dni}\n` +
           buildCuentaBlock() + getProductString() +
-          `\n\nCADENITA DE REGALO 🎁\n\nVENDEDOR VALENTINO`;
+          `\n\nCADENITA DE REGALO 🎁\n\nVENDEDOR SANDRO`;
     }
     return t.replace(/\s+$/, "");
   })();
@@ -288,6 +288,7 @@ export default function App() {
       nom: clientData.nombre,
       dni: clientData.dni,
       hora,
+      codigoPublicidad: clientData.codigoPublicidad || "R-D",
       marcaLabel: "OVER",
       limaMark: tab === "lima" ? "X" : "",
       provMark: tab === "prov" ? "X" : "",

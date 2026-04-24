@@ -186,7 +186,7 @@ export default function PlanillaPanel({ sales }: { sales: any[] }) {
                   <td contentEditable suppressContentEditableWarning></td>
                   <td contentEditable suppressContentEditableWarning></td>
                   <td contentEditable suppressContentEditableWarning></td>
-                  <td contentEditable suppressContentEditableWarning>R-D</td>
+                  <td contentEditable suppressContentEditableWarning>{sale.codigoPublicidad}</td>
                   <td contentEditable suppressContentEditableWarning>{sale.marcaLabel}</td>
                   <td contentEditable suppressContentEditableWarning>{sale.limaMark}</td>
                   <td contentEditable suppressContentEditableWarning>{sale.provMark}</td>
@@ -228,7 +228,7 @@ export default function PlanillaPanel({ sales }: { sales: any[] }) {
               </tr>
               <tr>
                 <td colSpan={4} className="f-cel" contentEditable suppressContentEditableWarning></td>
-                <td colSpan={2} className="f-vend" contentEditable suppressContentEditableWarning>Valentino</td>
+                <td colSpan={2} className="f-vend" contentEditable suppressContentEditableWarning>SANDRO</td>
                 <td colSpan={4} className="f-firma" contentEditable suppressContentEditableWarning></td>
                 <td colSpan={4} className="f-fecha" contentEditable suppressContentEditableWarning>{new Date().toLocaleDateString('es-PE')}</td>
                 <td colSpan={3} className="f-obs" contentEditable suppressContentEditableWarning></td>
