@@ -227,7 +227,7 @@
     .field-msg.error { display:block; background:var(--danger-soft); color:var(--danger); border:1px solid rgba(240,64,96,.3); }
     .field-msg.ok    { display:block; background:var(--ok-soft);      color:var(--ok);     border:1px solid rgba(46,232,160,.3); }
     .field-msg.warn  { display:block; background:rgba(245,166,35,.09); color:var(--warn);   border:1px solid rgba(245,166,35,.3); }
-    input.invalid { border-color:var(--danger) !important; box-shadow:0 0 0 3px rgba(240,64,96,.12) !important; }
+    input.invalid, input.error { border-color:var(--danger) !important; box-shadow:0 0 0 3px rgba(240,64,96,.12) !important; }
     input.valid   { border-color:var(--ok)     !important; box-shadow:0 0 0 3px rgba(46,232,160,.1)  !important; }
 
     /* ── Autocomplete distritos ── */

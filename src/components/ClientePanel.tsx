@@ -1,7 +1,7 @@
-import { Search, MapPin, CheckCircle2, XCircle, ChevronDown, RotateCcw, RefreshCw, Package, Bike, Store } from 'lucide-react';
+import { Search, MapPin, CheckCircle2, XCircle, ChevronDown, RotateCcw, RefreshCw, Package, Bike, Store, AlertCircle } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { DISTRITOS } from '../lib/data';
-import { searchSedes, checkCob, parseCoords, updateSedes, getSedesCount } from '../lib/geo';
+import { searchSedes, checkCob, parseCoords, updateSedes, getSedesCount, detectarDistritoLima } from '../lib/geo';
 import DropdownPortal from './DropdownPortal';
 
 async function sha256Hmac(message: string, secret: string) {
@@ -32,6 +32,11 @@ export default function ClientePanel({ tab, data, onChange }: any) {
   const distInputRef = useRef<HTMLInputElement>(null);
 
   const [cobStatus, setCobStatus] = useState<number>(-1);
+  const [distritoDetectado, setDistritoDetectado] = useState(false);
+
+  // Estados para validaciones
+  const [celularError, setCelularError] = useState("");
+  const [dniError, setDniError] = useState("");
 
   const handleUpdateSedes = async () => {
     setUpdatingSedes(true);
@@ -114,8 +119,42 @@ export default function ClientePanel({ tab, data, onChange }: any) {
     const coords = parseCoords(val);
     if (coords) {
       setCobStatus(checkCob(coords.lon, coords.lat));
+      // Detectar distrito automáticamente según coordenadas
+      const distrito = detectarDistritoLima(coords.lat, coords.lon);
+      if (distrito) {
+        setDistQuery(distrito);
+        onChange('distrito', distrito);
+        setDistritoDetectado(true);
+        // Ocultar mensaje después de 3 segundos
+        setTimeout(() => setDistritoDetectado(false), 3000);
+      } else {
+        setDistritoDetectado(false);
+      }
     } else {
       setCobStatus(-1);
+      setDistritoDetectado(false);
+    }
+  };
+
+  // Validación de celular
+  const handleCelularChange = (val: string) => {
+    onChange('celular', val);
+    const numeros = val.replace(/\D/g, '');
+    if (numeros.length > 0 && numeros.length < 9) {
+      setCelularError("El número de celular debe tener al menos 9 dígitos");
+    } else {
+      setCelularError("");
+    }
+  };
+
+  // Validación de DNI
+  const handleDniChange = (val: string) => {
+    onChange('dni', val);
+    const numeros = val.replace(/\D/g, '');
+    if (numeros.length > 0 && numeros.length < 8) {
+      setDniError("El DNI debe tener al menos 8 dígitos");
+    } else {
+      setDniError("");
     }
   };
 
@@ -142,9 +181,29 @@ export default function ClientePanel({ tab, data, onChange }: any) {
             <label>NOMBRE COMPLETO</label>
             <input value={data.nombre} onChange={e => onChange('nombre', e.target.value)} placeholder="Nombre y apellido" className="form-input" />
             <label>CELULAR</label>
-            <input value={data.celular} onChange={e => onChange('celular', e.target.value)} placeholder="9xxxxxxxx" className="form-input" />
+            <input
+              value={data.celular}
+              onChange={e => handleCelularChange(e.target.value)}
+              placeholder="9xxxxxxxx"
+              className={`form-input ${celularError ? 'error' : ''}`}
+            />
+            {celularError && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
+                <AlertCircle size={16} /> {celularError}
+              </div>
+            )}
             <label>NÚMERO DNI</label>
-            <input value={data.dni} onChange={e => onChange('dni', e.target.value)} placeholder="12345678" className="form-input" />
+            <input
+              value={data.dni}
+              onChange={e => handleDniChange(e.target.value)}
+              placeholder="12345678"
+              className={`form-input ${dniError ? 'error' : ''}`}
+            />
+            {dniError && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
+                <AlertCircle size={16} /> {dniError}
+              </div>
+            )}
             <label>CÓDIGO DE PUBLICIDAD</label>
             <input value={data.codigoPublicidad} onChange={e => onChange('codigoPublicidad', e.target.value)} placeholder="Live" className="form-input" />
             <label>DEPARTAMENTO</label>
@@ -219,9 +278,29 @@ export default function ClientePanel({ tab, data, onChange }: any) {
             <label>NOMBRE COMPLETO</label>
             <input value={data.nombre} onChange={e => onChange('nombre', e.target.value)} placeholder="Nombre y apellido" className="form-input" />
             <label>NÚMERO CELULAR</label>
-            <input value={data.celular} onChange={e => onChange('celular', e.target.value)} placeholder="9xxxxxxx" className="form-input" />
+            <input
+              value={data.celular}
+              onChange={e => handleCelularChange(e.target.value)}
+              placeholder="9xxxxxxx"
+              className={`form-input ${celularError ? 'error' : ''}`}
+            />
+            {celularError && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
+                <AlertCircle size={16} /> {celularError}
+              </div>
+            )}
             <label>DNI</label>
-            <input value={data.dni} onChange={e => onChange('dni', e.target.value)} placeholder="12345678" className="form-input" />
+            <input
+              value={data.dni}
+              onChange={e => handleDniChange(e.target.value)}
+              placeholder="12345678"
+              className={`form-input ${dniError ? 'error' : ''}`}
+            />
+            {dniError && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
+                <AlertCircle size={16} /> {dniError}
+              </div>
+            )}
             <label>CÓDIGO DE PUBLICIDAD</label>
             <input value={data.codigoPublicidad} onChange={e => onChange('codigoPublicidad', e.target.value)} placeholder="Live" className="form-input" />
             <label>UBICACIÓN EN TIEMPO REAL (MANDAR)</label>
@@ -253,6 +332,12 @@ export default function ClientePanel({ tab, data, onChange }: any) {
               <button className="btn btn-secondary" onClick={detectIp} title="Detectar" style={{ height: '42px', padding: '0 1rem' }}><MapPin size={16}/></button>
             </div>
 
+            {distritoDetectado && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#2ee8a0', fontSize: '0.85rem', marginTop: '0.5rem', animation: 'fadeUp 0.3s ease' }}>
+                <CheckCircle2 size={16} /> Distrito detectado automáticamente según coordenadas
+              </div>
+            )}
+
             <DropdownPortal
               isOpen={showDistDrop}
               anchorRef={distInputRef}
@@ -278,9 +363,29 @@ export default function ClientePanel({ tab, data, onChange }: any) {
             <label>NOMBRE COMPLETO</label>
             <input value={data.nombre} onChange={e => onChange('nombre', e.target.value)} placeholder="Nombre y apellido" className="form-input" />
             <label>CELULAR</label>
-            <input value={data.celular} onChange={e => onChange('celular', e.target.value)} placeholder="9xxxxxxx" className="form-input" />
+            <input
+              value={data.celular}
+              onChange={e => handleCelularChange(e.target.value)}
+              placeholder="9xxxxxxx"
+              className={`form-input ${celularError ? 'error' : ''}`}
+            />
+            {celularError && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
+                <AlertCircle size={16} /> {celularError}
+              </div>
+            )}
             <label>NÚMERO DNI</label>
-            <input value={data.dni} onChange={e => onChange('dni', e.target.value)} placeholder="12345678" className="form-input" />
+            <input
+              value={data.dni}
+              onChange={e => handleDniChange(e.target.value)}
+              placeholder="12345678"
+              className={`form-input ${dniError ? 'error' : ''}`}
+            />
+            {dniError && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
+                <AlertCircle size={16} /> {dniError}
+              </div>
+            )}
             <label>CÓDIGO DE PUBLICIDAD</label>
             <input value={data.codigoPublicidad} onChange={e => onChange('codigoPublicidad', e.target.value)} placeholder="Live" className="form-input" />
           </div>
