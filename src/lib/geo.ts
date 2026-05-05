@@ -43,12 +43,59 @@ export function searchSedes(q: string, lim = 14) {
   return res.sort((a, b) => b.sc - a.sc).slice(0, lim).map(r => r.s);
 }
 
-// Bounding box simple for Lima as ZAZU coverage placeholder.
+/* ── ZAZU Coverage — Real polygon from KML ── */
+import zazuData from './zazuCoverage.json';
+
+// Ray-casting point-in-polygon algorithm
+function pointInPolygon(lon: number, lat: number, polygon: number[][]): boolean {
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i][0], yi = polygon[i][1];
+    const xj = polygon[j][0], yj = polygon[j][1];
+    if (((yi > lat) !== (yj > lat)) && (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi)) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+export interface CoberturaResult {
+  dentro: boolean;
+  tipo: 'cobertura' | 'hueco' | 'no_cobertura' | 'fuera';
+  mensaje: string;
+}
+
+export function checkCoberturaZazu(lon: number, lat: number): CoberturaResult {
+  // Check if inside the NO COBERTURA exclusion zone
+  if (pointInPolygon(lon, lat, zazuData.noCobertura)) {
+    return { dentro: false, tipo: 'no_cobertura', mensaje: '⚠️ Zona sin cobertura ZAZU. Se recomienda envío por Shalom.' };
+  }
+  // Check if inside a hole in the coverage
+  for (const hole of zazuData.holes) {
+    if (pointInPolygon(lon, lat, hole)) {
+      return { dentro: false, tipo: 'hueco', mensaje: '⚠️ Esta zona no tiene cobertura ZAZU (zona excluida). Se recomienda envío por Shalom.' };
+    }
+  }
+  // Check if inside the outer coverage polygon
+  if (pointInPolygon(lon, lat, zazuData.outer)) {
+    return { dentro: true, tipo: 'cobertura', mensaje: '✅ Dentro de cobertura ZAZU Express' };
+  }
+  // Outside everything
+  return { dentro: false, tipo: 'fuera', mensaje: '❌ Fuera de cobertura ZAZU. Se recomienda envío por Shalom a provincia.' };
+}
+
+// Keep legacy function for backward compatibility
 export function checkCob(lon: number, lat: number) {
-  // Return values based on original logic: 0=dentro, 1=fuera_exterior, 2=fuera_hole, 3=fuera_no_cob
-  // We approximate the bounding box of Lima roughly.
-  if (lon < -77.2 || lon > -76.8 || lat < -12.3 || lat > -11.7) return 1; // Fuera exterior
-  return 0; // Dentro
+  const result = checkCoberturaZazu(lon, lat);
+  return result.dentro ? 0 : 1;
+}
+
+// Find nearest Shalom agency to given coordinates
+export function findNearestShalom(lat: number, lon: number, limit = 3): { sede: typeof SEDES[0]; distKm: number }[] {
+  return SEDES
+    .map(s => ({ sede: s, distKm: calcularDistancia(lat, lon, s.lat, s.lon) }))
+    .sort((a, b) => a.distKm - b.distKm)
+    .slice(0, limit);
 }
 
 // Distritos de Lima con coordenadas aproximadas del centro de cada distrito

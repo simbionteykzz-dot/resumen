@@ -1,0 +1,65 @@
+export interface ClientData {
+  nombre: string;
+  celular: string;
+  dni: string;
+  provincia: string;
+  depto: string;
+  sede: string;
+  ubicacion: string;
+  distrito: string;
+  codigoPublicidad: string;
+}
+
+export interface CuentaData {
+  tipo: string;
+  pago: string;
+  debe: string;
+}
+
+export interface ColorLine {
+  color: string;
+  qty: number;
+}
+
+export interface Product {
+  name: string;
+  qty: number;
+  size?: string;
+  colorLines?: ColorLine[];
+  promoName?: string;
+  promoPricePerUnit?: number;
+}
+
+export interface Sale {
+  cel: string;
+  nom: string;
+  dni: string;
+  hora: string;
+  codigoPublicidad: string;
+  marcaLabel: string;
+  limaMark: string;
+  provMark: string;
+  separo: string;
+  resta: string;
+  pagoCompletoTxt: string;
+  metodoPago: string;
+  combo: string;
+  qtyN: number;
+  totalTotal: number;
+  _dbId?: string;
+}
+
+export interface BoosterState {
+  cadenitas: number;
+  urgencia: boolean;
+  socialProof: boolean;
+  recomendacion: boolean;
+  descuento: boolean;
+  fraseVenta: boolean;
+}
+
+export interface ToastState {
+  msg: string;
+  type: 'ok' | 'err';
+  leaving: boolean;
+}

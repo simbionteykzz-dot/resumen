@@ -1,5 +1,5 @@
 export const POLOS_CATALOGO_OVERSHARK = [
-  "BABY TY", "BABY TY MANGA", "CAMISA WAFFLE", "CAMISERO JERSEY", "CAMISERO PIKE",
+  "BABY TY", "BABY TY MANGA", "CAMISA WAFFLE", "CAMISERO PIKE",
   "CLASICO", "CUELLO CHINO", "CUELLO CHINO WAFFLE", "JERSEY MANGA LARGA", "OVERSIZE",
   "WAFFLE", "WAFFLE CAMISERO", "WAFFLE MANGA LARGA", "CUELLO NOTCH PIQUE", "CUELLO NOTCH WAFLE"
 ];
@@ -18,7 +18,7 @@ export const POL_VARIANTES_OVERSHARK: Record<string, { tallas: string[], colores
   "BABY TY": { tallas: TALLAS_SML, colores: COLORES_BABY_TY },
   "BABY TY MANGA": { tallas: TALLAS_SML, colores: COLORES_BABY_TY },
   "CAMISA WAFFLE": { tallas: TALLAS_SMLXL, colores: COLORES_CAMISA_WAFFLE },
-  "CAMISERO JERSEY": { tallas: TALLAS_SMLXL, colores: COLORES_15_POLO },
+
   "CAMISERO PIKE": { tallas: TALLAS_SMLXL, colores: COLORES_15_POLO },
   "CLASICO": { tallas: TALLAS_SMLXL, colores: COLORES_15_POLO },
   "CUELLO CHINO": { tallas: TALLAS_SMLXL, colores: COLORES_CUELLO_CHINO },
@@ -33,7 +33,7 @@ export const POL_VARIANTES_OVERSHARK: Record<string, { tallas: string[], colores
 };
 
 export const POL_PRECIOS_OVERSHARK: Record<string, number> = {
-  "BABY TY": 45, "BABY TY MANGA": 45, "CAMISA WAFFLE": 45, "CAMISERO JERSEY": 45,
+  "BABY TY": 45, "BABY TY MANGA": 45, "CAMISA WAFFLE": 45,
   "CAMISERO PIKE": 45, "CLASICO": 45, "CUELLO CHINO": 45, "CUELLO CHINO WAFFLE": 45,
   "JERSEY MANGA LARGA": 45, "OVERSIZE": 45, "WAFFLE": 45, "WAFFLE CAMISERO": 45,
   "WAFFLE MANGA LARGA": 45, "CUELLO NOTCH PIQUE": 45, "CUELLO NOTCH WAFLE": 45
@@ -57,7 +57,7 @@ export const PROMOS_DATA: Record<string, {name: string, comboData: string, price
   "baby_ty_3_50":        { name: "Baby Ty 3×50",           comboData: "BABY TY 3 X 50",            price: 50, list: [{n:"BABY TY",           q:3}] },
   "baby_ty_manga_3_50":  { name: "Baby Ty Manga 3×50",     comboData: "BABY TY MANGA 3 X 50",      price: 50, list: [{n:"BABY TY MANGA",     q:3}] },
   // Promociones mixtas
-  "mixtura": { name: "Promoción Mixtura 6×99",  comboData: "PROMOCIÓN MIXTURA 6 X 99",  price: 99, list: [{n:"CAMISERO JERSEY", q:2}, {n:"WAFFLE", q:2}, {n:"CAMISERO PIKE", q:2}] },
+  "mixtura": { name: "Promoción Mixtura 6×99",  comboData: "PROMOCIÓN MIXTURA 6 X 99",  price: 99, list: [{n:"WAFFLE", q:3}, {n:"CAMISERO PIKE", q:3}] },
   "bellaca":  { name: "Promoción Bellaca 6×99", comboData: "PROMOCIÓN BELLACA 6 X 99",  price: 99, list: [{n:"CLASICO", q:3}, {n:"WAFFLE", q:1}, {n:"CAMISERO PIKE", q:1}, {n:"WAFFLE MANGA LARGA", q:1}] },
   "flow":     { name: "Promoción Flow 7×99",    comboData: "PROMOCIÓN FLOW 7 X 99",     price: 99, list: [{n:"CLASICO", q:5}, {n:"CAMISERO PIKE", q:2}] },
   "salvaje":  { name: "Promoción Salvaje 6×99", comboData: "PROMOCIÓN SALVAJE 6 X 99",  price: 99, list: [{n:"WAFFLE CAMISERO", q:2}, {n:"CLASICO", q:4}] },

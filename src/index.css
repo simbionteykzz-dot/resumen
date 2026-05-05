@@ -73,6 +73,68 @@ html {
     box-shadow: 0 0 30px rgba(255, 107, 0, 0.4);
   }
 }
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toastOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(8px) scale(0.97); }
+}
+
+/* ── Toast ── */
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  animation: toastIn 0.25s ease forwards;
+  max-width: 320px;
+}
+.toast.ok  { background: #0f2b1a; border: 1.5px solid #00e696; color: #00e696; }
+.toast.err { background: #2b0f0f; border: 1.5px solid #ef4444; color: #ef4444; }
+.toast.leaving { animation: toastOut 0.2s ease forwards; }
+
+/* ── Barra de progreso meta ── */
+.meta-bar-track {
+  background: rgba(255,255,255,0.08);
+  border-radius: 99px;
+  height: 6px;
+  overflow: hidden;
+  width: 100%;
+}
+.meta-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+/* ── Botón eliminar fila planilla ── */
+.btn-del-row {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted2);
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-del-row:hover { color: var(--danger); background: var(--danger-soft); }
+
+@media print {
+  .col-del { display: none !important; }
+}
 
 .fa-spin { animation: spin 1s linear infinite; }
 
@@ -82,21 +144,21 @@ body {
   font-family: 'League Spartan', 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
   background: linear-gradient(135deg, var(--bg) 0%, #130d08 100%);
   color: var(--text);
-  line-height: 1.6;
-  padding: 1.25rem 1rem;
+  line-height: 1.7;
+  padding: 1.5rem 1rem;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 @media(min-width:680px) {
   body {
-    padding: 2rem 1.75rem;
+    padding: 2.5rem 2rem;
   }
 }
 
 @media(min-width:1200px) {
   body {
-    padding: 2.5rem 2rem;
+    padding: 3rem 2.5rem;
   }
 }
 
@@ -245,9 +307,9 @@ body {
 .panel {
   background: linear-gradient(135deg, rgba(10, 16, 23, 0.7) 0%, rgba(17, 25, 33, 0.7) 100%);
   border: 1px solid rgba(26, 39, 51, 0.8);
-  border-radius: 16px;
-  padding: 2rem;
-  margin-bottom: 1.5rem;
+  border-radius: 18px;
+  padding: 2rem 2.25rem;
+  margin-bottom: 2rem;
   position: relative;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
   backdrop-filter: blur(8px);
@@ -264,7 +326,7 @@ label {
   font-size: 0.75rem;
   font-weight: 800;
   color: var(--muted);
-  margin: 1rem 0 0.5rem;
+  margin: 1.25rem 0 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -362,8 +424,8 @@ select { cursor:pointer; padding-right:2.2rem; appearance:none; background-image
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
+  margin-bottom: 1.75rem;
+  padding-bottom: 1.25rem;
   border-bottom: 1px solid rgba(255, 107, 0, 0.1);
 }
 .cliente-panel-head h2 {
@@ -1153,6 +1215,26 @@ input[type="radio"]:checked { border-color: var(--accent) !important; }
   font-family: inherit;
 }
 .pc-color-rm:hover { opacity: 1; background: rgba(239, 68, 68, 0.15); border-color: var(--danger); }
+
+/* ── Frases de Venta Panel ── */
+.frase-card:hover {
+  background: linear-gradient(135deg, rgba(255, 107, 0, 0.1), rgba(224, 85, 0, 0.06)) !important;
+  border-color: rgba(255, 107, 0, 0.25) !important;
+  transform: translateX(4px);
+}
+.rec-card:hover {
+  border-color: rgba(56, 200, 245, 0.35) !important;
+  background: linear-gradient(135deg, rgba(56, 200, 245, 0.1), rgba(56, 200, 245, 0.04)) !important;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(56, 200, 245, 0.12);
+}
+
+/* ── Boosters Panel ── */
+.booster-card:hover {
+  border-color: rgba(255, 107, 0, 0.3) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
 
 ::-webkit-scrollbar {
   width: 10px;

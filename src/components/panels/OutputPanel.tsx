@@ -64,7 +64,6 @@ export default function OutputPanel({ outputText, onAddSale, clientCelular }: { 
         </button>
       </div>
 
-      <div className={`toast ${copied ? 'show' : ''}`}>✓ Copiado al portapapeles</div>
     </div>
   );
 }

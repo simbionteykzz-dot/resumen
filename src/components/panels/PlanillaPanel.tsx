@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { Printer, FileSpreadsheet, Lightbulb, BarChart3, FileText } from 'lucide-react';
+import { Printer, FileSpreadsheet, Lightbulb, BarChart3, FileText, Trash2 } from 'lucide-react';
 
 const abrevMetodo = (m: string) => {
   if (!m) return 'I.T';
@@ -12,7 +12,16 @@ const abrevMetodo = (m: string) => {
   return m.slice(0, 4).toUpperCase();
 };
 
-export default function PlanillaPanel({ sales }: { sales: any[] }) {
+interface PlanillaPanelProps {
+  sales: any[];
+  selectedDate: string;
+  onDateChange: (date: string) => void;
+  loadingSync: boolean;
+  syncError: string | null;
+  onDeleteSale?: (index: number) => void;
+}
+
+export default function PlanillaPanel({ sales, selectedDate, onDateChange, loadingSync, syncError, onDeleteSale }: PlanillaPanelProps) {
   const [exporting, setExporting] = useState(false);
 
   const exportPdf = async () => {
@@ -117,18 +126,38 @@ export default function PlanillaPanel({ sales }: { sales: any[] }) {
           <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
             <FileSpreadsheet size={20} /> Planilla de ventas
           </h2>
-          <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', color: 'var(--muted)' }}>
+          <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', color: 'var(--muted)', flexWrap: 'wrap', alignItems: 'center' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
               <BarChart3 size={14} /> <strong>{sales.length}</strong> ventas registradas
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
               <FileText size={14} /> <strong>{emptyRowsCount}</strong> filas disponibles
             </span>
+            {loadingSync && (
+              <span style={{ color: 'var(--accent)', fontWeight: 700 }}>⏳ Cargando...</span>
+            )}
+            {syncError && (
+              <span style={{ color: 'var(--danger)', fontSize: '0.78rem' }}>⚠ {syncError}</span>
+            )}
           </div>
         </div>
-        <div className="cliente-panel-actions">
-          <button className="btn btn-primary" onClick={exportPdf} disabled={exporting} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            {exporting ? "⏳ Generando PDF..." : <><Printer size={16} /> Exportar PDF (2 hojas)</>}
+        <div className="cliente-panel-actions" style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={e => onDateChange(e.target.value)}
+            style={{
+              background: 'var(--surface2)',
+              border: '1px solid var(--surface3)',
+              borderRadius: '8px',
+              color: 'var(--text)',
+              padding: '0.45rem 0.75rem',
+              fontSize: '0.85rem',
+              cursor: 'pointer',
+            }}
+          />
+          <button className="btn btn-primary" onClick={exportPdf} disabled={exporting || loadingSync} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {exporting ? "⏳ Generando PDF..." : <><Printer size={16} /> Exportar PDF</>}
           </button>
         </div>
       </div>
@@ -143,21 +172,22 @@ export default function PlanillaPanel({ sales }: { sales: any[] }) {
             <colgroup>
               <col style={{ width: '2.5%' }} />
               <col style={{ width: '6.5%' }} />
-              <col style={{ width: '11.5%' }} />
-              <col style={{ width: '6.5%' }} />
-              <col style={{ width: '7.5%' }} />
+              <col style={{ width: '11%' }} />
+              <col style={{ width: '6%' }} />
+              <col style={{ width: '7%' }} />
               <col style={{ width: '4%' }} />
               <col style={{ width: '3.5%' }} />
               <col style={{ width: '3.5%' }} />
               <col style={{ width: '3.5%' }} />
-              <col style={{ width: '8.5%' }} />
-              <col style={{ width: '5.5%' }} />
+              <col style={{ width: '8%' }} />
+              <col style={{ width: '5%' }} />
+              <col style={{ width: '3.5%' }} />
+              <col style={{ width: '3.5%' }} />
               <col style={{ width: '4%' }} />
               <col style={{ width: '4%' }} />
-              <col style={{ width: '4.5%' }} />
-              <col style={{ width: '4.5%' }} />
-              <col style={{ width: '8.5%' }} />
-              <col style={{ width: '13.5%' }} />
+              <col style={{ width: '8%' }} />
+              <col style={{ width: '12%' }} />
+              <col className="col-del" style={{ width: '2.5%' }} />
             </colgroup>
             <thead>
               <tr>
@@ -177,6 +207,7 @@ export default function PlanillaPanel({ sales }: { sales: any[] }) {
                 <th className="col-contra-entrega" colSpan={2}>CONTRA ENTREGA</th>
                 <th className="col-pago-completo" rowSpan={2}>PAGO COMPLETO</th>
                 <th className="col-combo" rowSpan={2}>TIPO DE COMBO</th>
+                <th className="col-del" rowSpan={2}></th>
               </tr>
               <tr>
                 <th className="col-separo">SEPARÓ</th>
@@ -203,6 +234,13 @@ export default function PlanillaPanel({ sales }: { sales: any[] }) {
                   <td contentEditable suppressContentEditableWarning>{sale.resta}</td>
                   <td contentEditable suppressContentEditableWarning>{sale.pagoCompletoTxt}</td>
                   <td contentEditable suppressContentEditableWarning>{sale.combo}</td>
+                  <td className="col-del">
+                    {onDeleteSale && (
+                      <button className="btn-del-row" onClick={() => onDeleteSale(i)} title="Eliminar venta">
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
               {emptyRows.map((_, i) => (
@@ -224,6 +262,7 @@ export default function PlanillaPanel({ sales }: { sales: any[] }) {
                   <td contentEditable suppressContentEditableWarning></td>
                   <td contentEditable suppressContentEditableWarning></td>
                   <td contentEditable suppressContentEditableWarning></td>
+                  <td className="col-del"></td>
                 </tr>
               ))}
             </tbody>
