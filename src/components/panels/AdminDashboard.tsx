@@ -37,7 +37,7 @@ export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedo
   const [editError, setEditError] = useState('');
 
   const {
-    filteredSales, paginatedSales, loading,
+    allSales, filteredSales, paginatedSales, loading,
     dateFrom, setDateFrom, dateTo, setDateTo,
     exactDate, setExactDate, monthFilter, setMonthFilter,
     search, setSearch,
@@ -50,10 +50,16 @@ export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedo
     metodoPagoFilter, setMetodoPagoFilter,
     showFilters, setShowFilters,
     page, setPage, totalPages,
-    globalStats, vendorStats, brandStats, salesByDay,
+    globalStats, vendorStats, brandStats, salesByDay, pubStats,
+    liveCount,
     refresh, clearFilters,
     getRegion, getEstado, anularVenta, editSale,
   } = useAdmin();
+
+  const [historyClient, setHistoryClient] = useState<{ nom: string; cel: string } | null>(null);
+  const clientHistory = historyClient
+    ? allSales.filter(s => s.cel === historyClient.cel).sort((a, b) => (b.fecha ?? '').localeCompare(a.fecha ?? ''))
+    : [];
 
   const openEdit = (s: AdminSale) => {
     setEditingId(s._dbId ?? null);
@@ -319,6 +325,12 @@ export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedo
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.3rem 0.7rem', borderRadius: '20px', background: liveCount > 0 ? 'rgba(0,230,150,0.15)' : 'rgba(255,255,255,0.04)', border: `1px solid ${liveCount > 0 ? 'rgba(0,230,150,0.4)' : 'rgba(255,255,255,0.08)'}`, transition: 'all 0.4s' }}>
+            <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: liveCount > 0 ? '#00e696' : '#3a4a3a', boxShadow: liveCount > 0 ? '0 0 6px #00e696' : 'none', animation: 'pulse 1.5s infinite' }} />
+            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: liveCount > 0 ? '#00e696' : '#4a5a4a', letterSpacing: '0.06em' }}>
+              {liveCount > 0 ? `+${liveCount} nueva${liveCount > 1 ? 's' : ''}` : 'EN VIVO'}
+            </span>
+          </div>
           <button onClick={onSwitchToVendedor} style={{ ...btn('info'), border: '1px solid rgba(56,200,245,0.25)' }}>
             📋 Vista Vendedor
           </button>
@@ -379,6 +391,39 @@ export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedo
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* ── Rendimiento por Código de Publicidad ── */}
+        {pubStats.length > 0 && (
+          <div style={{ background: S.surface, border: S.border, borderRadius: '12px', padding: '1rem 1.25rem', marginBottom: '1.25rem' }}>
+            <div style={{ fontSize: '0.68rem', fontWeight: 800, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.85rem' }}>
+              Rendimiento por Código de Publicidad
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+              {pubStats.map((p, i) => {
+                const maxRev = pubStats[0].revenue;
+                const barPct = maxRev > 0 ? Math.round((p.revenue / maxRev) * 100) : 0;
+                const totalRev = pubStats.reduce((a, x) => a + x.revenue, 0);
+                const pct = totalRev > 0 ? Math.round((p.revenue / totalRev) * 100) : 0;
+                const hue = [S.accent, '#38c8f5', '#a78bfa', '#00e696', '#f59e0b', '#ec4899'][i % 6];
+                return (
+                  <div key={p.code} style={{ background: 'rgba(22,17,13,0.5)', border: '1px solid #2a1f14', borderRadius: '8px', padding: '0.5rem 0.85rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 800, color: S.text }}>{p.code}</span>
+                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.68rem', color: S.muted }}>{p.count} ventas · {p.items} prendas</span>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 900, color: hue }}>S/{p.revenue.toLocaleString()}</span>
+                        <span style={{ fontSize: '0.68rem', fontWeight: 800, background: 'rgba(255,255,255,0.05)', borderRadius: '4px', padding: '0.1rem 0.45rem', color: hue }}>{pct}%</span>
+                      </div>
+                    </div>
+                    <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${barPct}%`, background: `linear-gradient(90deg,${hue},${hue}88)`, borderRadius: '2px', transition: 'width 0.5s ease' }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
@@ -556,7 +601,14 @@ export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedo
                       <td style={td}>
                         <span style={{ background: regionColor.bg, color: regionColor.color, borderRadius: '4px', padding: '0.15rem 0.5rem', fontWeight: 700, fontSize: '0.68rem' }}>{region}</span>
                       </td>
-                      <td style={{ ...td, fontWeight: 600, color: '#f0e6d8' }}>{s.nom || '—'}</td>
+                      <td style={{ ...td, fontWeight: 600, color: '#f0e6d8' }}>
+                        <span
+                          onClick={() => s.cel && setHistoryClient({ nom: s.nom || '—', cel: s.cel })}
+                          style={{ cursor: s.cel ? 'pointer' : 'default', borderBottom: s.cel ? '1px dashed rgba(56,200,245,0.4)' : 'none' }}
+                          title={s.cel ? 'Ver historial del cliente' : undefined}>
+                          {s.nom || '—'}
+                        </span>
+                      </td>
                       <td style={td}>{s.cel || '—'}</td>
                       <td style={td}>{s.dni || '—'}</td>
                       <td style={{ ...td, fontWeight: 900, color: '#00e696' }}>S/{s.totalTotal ?? 0}</td>
@@ -607,6 +659,73 @@ export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedo
           <Pagination page={page} totalPages={totalPages} onPage={setPage} />
         </div>
       </div>
+
+      {/* ── Drawer historial de cliente ── */}
+      {historyClient && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 900, display: 'flex' }}
+          onClick={e => { if (e.target === e.currentTarget) setHistoryClient(null); }}>
+          <div style={{ flex: 1, background: 'rgba(0,0,0,0.5)' }} onClick={() => setHistoryClient(null)} />
+          <div style={{ width: '420px', height: '100%', background: '#0a0e14', borderLeft: '1px solid rgba(56,200,245,0.2)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+            {/* Header del drawer */}
+            <div style={{ padding: '1.25rem 1.25rem 0.75rem', borderBottom: '1px solid rgba(56,200,245,0.12)', background: 'linear-gradient(180deg,rgba(56,200,245,0.06),transparent)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <div style={{ fontSize: '1rem', fontWeight: 900, color: '#fff', marginBottom: '0.2rem' }}>{historyClient.nom}</div>
+                  <div style={{ fontSize: '0.78rem', color: '#38c8f5', fontWeight: 700 }}>{historyClient.cel}</div>
+                </div>
+                <button onClick={() => setHistoryClient(null)} style={{ background: 'transparent', border: 'none', color: '#a08060', cursor: 'pointer' }}>
+                  <X size={18} />
+                </button>
+              </div>
+              {/* Resumen del cliente */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginTop: '0.85rem' }}>
+                {[
+                  { label: 'Compras', value: clientHistory.length, color: '#38c8f5' },
+                  { label: 'Total S/', value: `S/${clientHistory.reduce((a, s) => a + (Number(s.totalTotal) || 0), 0).toLocaleString()}`, color: '#00e696' },
+                  { label: 'Deuda S/', value: `S/${clientHistory.reduce((a, s) => { const v = parseFloat(s.resta || '0'); return a + (isNaN(v) ? 0 : v); }, 0).toFixed(0)}`, color: clientHistory.some(s => parseFloat(s.resta || '0') > 0) ? '#ef4444' : '#a08060' },
+                ].map(k => (
+                  <div key={k.label} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '0.5rem 0.6rem', textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.6rem', color: '#a08060', textTransform: 'uppercase', fontWeight: 800, marginBottom: '0.2rem' }}>{k.label}</div>
+                    <div style={{ fontSize: '1rem', fontWeight: 900, color: k.color }}>{k.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Lista de compras */}
+            <div style={{ flex: 1, padding: '0.75rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#a08060', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.25rem' }}>
+                Historial de Compras
+              </div>
+              {clientHistory.length === 0 ? (
+                <div style={{ color: '#a08060', fontSize: '0.82rem', textAlign: 'center', marginTop: '2rem' }}>Sin compras en el período cargado</div>
+              ) : clientHistory.map((s, i) => {
+                const estado = getEstado(s);
+                const estadoColor = estado === 'PAGO COMPLETO' ? '#00e696' : estado === 'CONTRA ENTREGA' ? '#ff6b00' : estado === 'ANULADO' ? '#ef4444' : '#a08060';
+                return (
+                  <div key={s._dbId ?? i} style={{ background: 'rgba(22,17,13,0.7)', border: '1px solid #2a1f14', borderRadius: '8px', padding: '0.65rem 0.85rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                      <span style={{ fontSize: '0.72rem', color: '#a08060' }}>{s.fecha ?? '—'}</span>
+                      <span style={{ fontSize: '0.65rem', fontWeight: 800, color: estadoColor, background: `${estadoColor}18`, borderRadius: '4px', padding: '0.1rem 0.45rem' }}>{estado}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                      <div>
+                        <div style={{ fontSize: '0.75rem', color: '#f0e6d8', fontWeight: 600, marginBottom: '0.15rem' }}>{s.combo || 'Sin detalle'}</div>
+                        <div style={{ fontSize: '0.68rem', color: '#a08060' }}>{s.marcaLabel || 'OVER'} · {s.vendorName}</div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '0.88rem', fontWeight: 900, color: '#00e696' }}>S/{s.totalTotal ?? 0}</div>
+                        {s.resta && parseFloat(s.resta) > 0 && (
+                          <div style={{ fontSize: '0.68rem', color: '#ef4444', fontWeight: 700 }}>Debe S/{s.resta}</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Modal de edición ── */}
       {editingId && editForm && (

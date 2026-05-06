@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { getAllSalesAdmin, getAllProfiles, anularVentaDB, updateVentaDB } from '../lib/supabase';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { supabase, getAllSalesAdmin, getAllProfiles, anularVentaDB, updateVentaDB, ventaFromDBRaw } from '../lib/supabase';
 import type { AdminSale, Profile, VendorStats } from '../types';
 import type { VentaDB } from '../lib/supabase';
 
@@ -13,6 +13,8 @@ export function useAdmin() {
   const [allSales, setAllSales] = useState<AdminSale[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [liveCount, setLiveCount] = useState(0);
+  const profilesMapRef = useRef<Record<string, string>>({});
 
   const [exactDate, setExactDate] = useState('');
   const [monthFilter, setMonthFilter] = useState('');
@@ -38,6 +40,7 @@ export function useAdmin() {
     const profs = await getAllProfiles();
     const profilesMap: Record<string, string> = {};
     profs.forEach(p => { if (p.id) profilesMap[p.id] = p.full_name ?? p.id; });
+    profilesMapRef.current = profilesMap;
     const sales = await getAllSalesAdmin(effectiveDateFrom, effectiveDateTo, profilesMap);
     setAllSales(sales);
     setProfiles(profs);
@@ -46,6 +49,30 @@ export function useAdmin() {
   };
 
   useEffect(() => { loadData(); }, [effectiveDateFrom, effectiveDateTo]);
+
+  // Suscripción Realtime — nuevas ventas llegan sin recargar
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-ventas-live')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ventas' }, (payload) => {
+        const row = payload.new as VentaDB;
+        const vendorName = profilesMapRef.current[row.user_id ?? ''] ?? 'Desconocido';
+        const newSale: AdminSale = { ...ventaFromDBRaw(row), vendorName, fecha: row.fecha ?? '' };
+        setAllSales(prev => [newSale, ...prev]);
+        setLiveCount(n => n + 1);
+        setTimeout(() => setLiveCount(n => Math.max(0, n - 1)), 4000);
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'ventas' }, (payload) => {
+        const row = payload.new as VentaDB;
+        setAllSales(prev => prev.map(s =>
+          s._dbId === row.id
+            ? { ...s, ...ventaFromDBRaw(row), fecha: row.fecha ?? s.fecha }
+            : s
+        ));
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const getRegion = (s: AdminSale) => {
     if (s.limaMark === 'X') return 'Lima';
@@ -144,6 +171,20 @@ export function useAdmin() {
       .sort((a, b) => b.revenue - a.revenue);
   }, [filteredSales]);
 
+  const pubStats = useMemo(() => {
+    const map: Record<string, { code: string; count: number; revenue: number; items: number }> = {};
+    filteredSales.forEach(s => {
+      const code = s.codigoPublicidad?.trim() || 'Sin código';
+      if (!map[code]) map[code] = { code, count: 0, revenue: 0, items: 0 };
+      map[code].count++;
+      map[code].revenue += Number(s.totalTotal) || 0;
+      map[code].items += Number(s.qtyN) || 0;
+    });
+    return Object.values(map)
+      .map(b => ({ ...b, revenue: Math.round(b.revenue * 100) / 100 }))
+      .sort((a, b) => b.revenue - a.revenue);
+  }, [filteredSales]);
+
   const salesByDay = useMemo((): [string, number][] => {
     const map: Record<string, number> = {};
     filteredSales.forEach(s => { if (s.fecha) map[s.fecha] = (map[s.fecha] || 0) + 1; });
@@ -197,7 +238,8 @@ export function useAdmin() {
     metodoPagoFilter, setMetodoPagoFilter,
     showFilters, setShowFilters,
     page: safePage, setPage, totalPages,
-    globalStats, vendorStats, brandStats, salesByDay,
+    globalStats, vendorStats, brandStats, salesByDay, pubStats,
+    liveCount,
     refresh: loadData, clearFilters,
     getRegion, getEstado, anularVenta, editSale,
   };

@@ -86,7 +86,7 @@ export async function getAllSalesAdmin(dateFrom: string, dateTo: string, profile
   })) as AdminSale[];
 }
 
-function ventaFromDBRaw(row: VentaDB): Sale {
+export function ventaFromDBRaw(row: VentaDB): Sale {
   return {
     cel: row.cel,
     nom: row.nom,
