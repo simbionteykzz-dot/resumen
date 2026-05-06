@@ -125,7 +125,7 @@ export function ventaFromDBRaw(row: VentaDB): Sale {
   };
 }
 
-export function ventaFromDB(row: VentaDB): Sale {
+export function ventaFromDB(row: VentaDB & { anulado?: boolean }): Sale & { _anulado?: boolean } {
   return {
     cel: row.cel,
     nom: row.nom,
@@ -149,6 +149,7 @@ export function ventaFromDB(row: VentaDB): Sale {
     ubicacion: row.ubicacion ?? '',
     detalle: row.detalle ?? '',
     _dbId: row.id,
+    _anulado: row.anulado ?? false,
   };
 }
 
@@ -164,6 +165,30 @@ export async function updateVentaDB(id: string, fields: Partial<Omit<VentaDB, 'i
   const { error } = await supabase
     .from('ventas')
     .update(fields)
+    .eq('id', id);
+  return !error;
+}
+
+export async function softDeleteVenta(id: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('ventas')
+    .update({ anulado: true })
+    .eq('id', id);
+  return !error;
+}
+
+export async function restoreVenta(id: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('ventas')
+    .update({ anulado: false })
+    .eq('id', id);
+  return !error;
+}
+
+export async function updateVentaUser(id: string, userId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('ventas')
+    .update({ user_id: userId })
     .eq('id', id);
   return !error;
 }

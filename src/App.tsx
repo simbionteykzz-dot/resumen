@@ -19,7 +19,7 @@ import AdminDashboard from './components/panels/AdminDashboard';
 import { Trash2, Store, Bike, Package, Truck, BarChart3, Wrench } from 'lucide-react';
 import { POL_PRECIOS_OVERSHARK, ENVIO_PROVINCIA_SOLES, ENVIO_LIMA_SOLES, POL_VARIANTES_OVERSHARK, BRV_PRECIOS, BRV_VARIANTES } from './lib/data';
 import { FRASES_RESUMEN, RECOMENDACIONES_RESUMEN } from './lib/boosters';
-import { getProfile } from './lib/supabase';
+import { getProfile, getAllProfiles } from './lib/supabase';
 import type { ClientData, CuentaData, BoosterState, ToastState, Sale, Profile } from './types';
 
 export default function App() {
@@ -68,8 +68,14 @@ export default function App() {
     }
   }, [isBravos]);
 
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+
   useEffect(() => {
     if (user?.id) getProfile(user.id).then(setProfile);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user) getAllProfiles().then(setProfiles);
   }, [user?.id]);
 
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -80,7 +86,7 @@ export default function App() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const { sales, selectedDate, setSelectedDate, loadingSync, syncError, addSale, deleteSale } =
+  const { sales, deletedSales, selectedDate, setSelectedDate, loadingSync, syncError, addSale, deleteSale, restoreSale } =
     useSales(user?.id, showToast);
 
   const [tab, setTab] = useState<'prov' | 'lima' | 'almacen'>('prov');
@@ -545,7 +551,7 @@ export default function App() {
             <>
               <CierreCajaPanel sales={sales} />
               <RankingPanel sales={sales} />
-              <PlanillaPanel sales={sales} selectedDate={selectedDate} onDateChange={setSelectedDate} loadingSync={loadingSync} syncError={syncError} onDeleteSale={deleteSale} />
+              <PlanillaPanel sales={sales} deletedSales={deletedSales} selectedDate={selectedDate} onDateChange={setSelectedDate} loadingSync={loadingSync} syncError={syncError} onDeleteSale={deleteSale} onRestoreSale={restoreSale} profiles={profiles} />
             </>
           )}
 
