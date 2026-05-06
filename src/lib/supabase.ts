@@ -135,3 +135,11 @@ export async function anularVentaDB(id: string): Promise<boolean> {
     .eq('id', id);
   return !error;
 }
+
+export async function updateVentaDB(id: string, fields: Partial<Omit<VentaDB, 'id' | 'created_at' | 'user_id'>>): Promise<boolean> {
+  const { error } = await supabase
+    .from('ventas')
+    .update(fields)
+    .eq('id', id);
+  return !error;
+}

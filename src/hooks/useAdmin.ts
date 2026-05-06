@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getAllSalesAdmin, getAllProfiles, anularVentaDB } from '../lib/supabase';
+import { getAllSalesAdmin, getAllProfiles, anularVentaDB, updateVentaDB } from '../lib/supabase';
 import type { AdminSale, Profile, VendorStats } from '../types';
+import type { VentaDB } from '../lib/supabase';
 
 const today = new Date().toISOString().split('T')[0];
 const firstOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
@@ -157,6 +158,31 @@ export function useAdmin() {
     }
   };
 
+  const editSale = async (id: string, fields: Partial<Omit<VentaDB, 'id' | 'created_at' | 'user_id'>>): Promise<boolean> => {
+    const ok = await updateVentaDB(id, fields);
+    if (ok) {
+      setAllSales(prev => prev.map(s => {
+        if (s._dbId !== id) return s;
+        return {
+          ...s,
+          nom: fields.nom ?? s.nom,
+          cel: fields.cel ?? s.cel,
+          dni: fields.dni ?? s.dni,
+          hora: fields.hora ?? s.hora,
+          fecha: fields.fecha ?? s.fecha,
+          codigoPublicidad: fields.codigo_publicidad ?? s.codigoPublicidad,
+          metodoPago: fields.metodo_pago ?? s.metodoPago,
+          separo: fields.separo ?? s.separo,
+          resta: fields.resta ?? s.resta,
+          totalTotal: fields.total_total ?? s.totalTotal,
+          combo: fields.combo ?? s.combo,
+          marcaLabel: fields.marca_label ?? s.marcaLabel,
+        };
+      }));
+    }
+    return ok;
+  };
+
   return {
     allSales, filteredSales, paginatedSales, profiles, loading,
     dateFrom, setDateFrom, dateTo, setDateTo,
@@ -173,6 +199,6 @@ export function useAdmin() {
     page: safePage, setPage, totalPages,
     globalStats, vendorStats, brandStats, salesByDay,
     refresh: loadData, clearFilters,
-    getRegion, getEstado, anularVenta,
+    getRegion, getEstado, anularVenta, editSale,
   };
 }

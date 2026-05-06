@@ -1,7 +1,8 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useAdmin } from '../../hooks/useAdmin';
-import { LogOut, RefreshCw, Filter, Search, Download, X, BarChart3, ShoppingBag, DollarSign, Package, AlertTriangle } from 'lucide-react';
+import { LogOut, RefreshCw, Filter, Search, Download, X, BarChart3, ShoppingBag, DollarSign, Package, AlertTriangle, Pencil } from 'lucide-react';
 import type { Profile } from '../../types';
+import type { AdminSale } from '../../types';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -12,8 +13,29 @@ interface AdminDashboardProps {
   onSwitchToVendedor: () => void;
 }
 
+type EditForm = {
+  nom: string; cel: string; dni: string; hora: string; fecha: string;
+  codigo_publicidad: string; metodo_pago: string; separo: string;
+  resta: string; total_total: string; combo: string; marca_label: string;
+};
+
+function saleToForm(s: AdminSale): EditForm {
+  return {
+    nom: s.nom ?? '', cel: s.cel ?? '', dni: s.dni ?? '', hora: s.hora ?? '',
+    fecha: s.fecha ?? '', codigo_publicidad: s.codigoPublicidad ?? '',
+    metodo_pago: s.metodoPago ?? '', separo: s.separo ?? '',
+    resta: s.resta ?? '', total_total: String(s.totalTotal ?? ''),
+    combo: s.combo ?? '', marca_label: s.marcaLabel ?? '',
+  };
+}
+
 export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedor }: AdminDashboardProps) {
   const tableRef = useRef<HTMLDivElement>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<EditForm | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState('');
+
   const {
     filteredSales, paginatedSales, loading,
     dateFrom, setDateFrom, dateTo, setDateTo,
@@ -30,8 +52,33 @@ export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedo
     page, setPage, totalPages,
     globalStats, vendorStats, brandStats, salesByDay,
     refresh, clearFilters,
-    getRegion, getEstado, anularVenta,
+    getRegion, getEstado, anularVenta, editSale,
   } = useAdmin();
+
+  const openEdit = (s: AdminSale) => {
+    setEditingId(s._dbId ?? null);
+    setEditForm(saleToForm(s));
+    setEditError('');
+  };
+
+  const closeEdit = () => { setEditingId(null); setEditForm(null); setEditError(''); };
+
+  const handleEditSave = async () => {
+    if (!editingId || !editForm) return;
+    setEditSaving(true);
+    setEditError('');
+    const ok = await editSale(editingId, {
+      nom: editForm.nom, cel: editForm.cel, dni: editForm.dni,
+      hora: editForm.hora, fecha: editForm.fecha,
+      codigo_publicidad: editForm.codigo_publicidad,
+      metodo_pago: editForm.metodo_pago, separo: editForm.separo,
+      resta: editForm.resta, total_total: Number(editForm.total_total) || 0,
+      combo: editForm.combo, marca_label: editForm.marca_label,
+    });
+    setEditSaving(false);
+    if (ok) closeEdit();
+    else setEditError('Error al guardar. Intenta de nuevo.');
+  };
 
   const startIdx = (page - 1) * 50;
   const endIdx = Math.min(startIdx + paginatedSales.length, filteredSales.length);
@@ -372,14 +419,24 @@ export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedo
                       <td style={td}>{s.metodoPago || '—'}</td>
                       <td style={{ ...td, maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#a08060' }}>{s.combo || '—'}</td>
                       <td style={{ ...td, padding: '0.3rem 0.5rem' }}>
-                        {!isAnulado && s._dbId && (
-                          <button
-                            onClick={() => anularVenta(s._dbId!)}
-                            title="Anular venta"
-                            style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '5px', color: '#ef4444', cursor: 'pointer', padding: '0.2rem 0.45rem', fontSize: '0.65rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
-                            ✕ Anular
-                          </button>
-                        )}
+                        <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+                          {s._dbId && (
+                            <button
+                              onClick={() => openEdit(s)}
+                              title="Editar venta"
+                              style={{ background: 'rgba(56,200,245,0.08)', border: '1px solid rgba(56,200,245,0.2)', borderRadius: '5px', color: '#38c8f5', cursor: 'pointer', padding: '0.2rem 0.45rem', fontSize: '0.65rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                              <Pencil size={10} /> Editar
+                            </button>
+                          )}
+                          {!isAnulado && s._dbId && (
+                            <button
+                              onClick={() => anularVenta(s._dbId!)}
+                              title="Anular venta"
+                              style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '5px', color: '#ef4444', cursor: 'pointer', padding: '0.2rem 0.45rem', fontSize: '0.65rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                              ✕ Anular
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -400,6 +457,80 @@ export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedo
           <Pagination page={page} totalPages={totalPages} onPage={setPage} />
         </div>
       </div>
+
+      {/* ── Modal de edición ── */}
+      {editingId && editForm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
+          onClick={e => { if (e.target === e.currentTarget) closeEdit(); }}>
+          <div style={{ background: '#0d1117', border: '1px solid rgba(56,200,245,0.25)', borderRadius: '16px', width: '100%', maxWidth: '680px', maxHeight: '90vh', overflowY: 'auto', padding: '1.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <div>
+                <div style={{ fontWeight: 900, fontSize: '1rem', color: '#fff' }}>Editar Registro</div>
+                <div style={{ fontSize: '0.72rem', color: '#a08060', marginTop: '0.15rem' }}>ID: {editingId}</div>
+              </div>
+              <button onClick={closeEdit} style={{ background: 'transparent', border: 'none', color: '#a08060', cursor: 'pointer', padding: '0.25rem' }}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem 1rem' }}>
+              {([
+                { key: 'nom', label: 'Cliente' },
+                { key: 'cel', label: 'Celular' },
+                { key: 'dni', label: 'DNI' },
+                { key: 'hora', label: 'Hora' },
+                { key: 'fecha', label: 'Fecha', type: 'date' },
+                { key: 'total_total', label: 'Total S/', type: 'number' },
+                { key: 'resta', label: 'Debe' },
+                { key: 'separo', label: 'Separo' },
+                { key: 'codigo_publicidad', label: 'Cod. Publicidad' },
+                { key: 'combo', label: 'Combo' },
+              ] as { key: keyof EditForm; label: string; type?: string }[]).map(({ key, label, type }) => (
+                <div key={key}>
+                  <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#a08060', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>{label}</div>
+                  <input
+                    type={type ?? 'text'}
+                    value={editForm[key]}
+                    onChange={e => setEditForm(f => f ? { ...f, [key]: e.target.value } : f)}
+                    style={{ ...iStyle, width: '100%' }}
+                  />
+                </div>
+              ))}
+              <div>
+                <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#a08060', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>Método de Pago</div>
+                <select value={editForm.metodo_pago} onChange={e => setEditForm(f => f ? { ...f, metodo_pago: e.target.value } : f)} style={{ ...iStyle, width: '100%' }}>
+                  <option value="Contra entrega">Contra entrega</option>
+                  <option value="Pago completo">Pago completo</option>
+                  <option value="Yape Import Textil">Yape Import Textil</option>
+                  <option value="Anulado">Anulado</option>
+                </select>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#a08060', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>Marca</div>
+                <select value={editForm.marca_label} onChange={e => setEditForm(f => f ? { ...f, marca_label: e.target.value } : f)} style={{ ...iStyle, width: '100%' }}>
+                  <option value="OVER">OVER</option>
+                  <option value="BRV">BRV</option>
+                </select>
+              </div>
+            </div>
+
+            {editError && (
+              <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '8px', color: '#ef4444', fontSize: '0.8rem' }}>
+                {editError}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '0.6rem', justifyContent: 'flex-end', marginTop: '1.25rem' }}>
+              <button onClick={closeEdit} style={{ padding: '0.55rem 1.1rem', borderRadius: '8px', border: '1px solid #2a1f14', background: 'transparent', color: '#a08060', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem' }}>
+                Cancelar
+              </button>
+              <button onClick={handleEditSave} disabled={editSaving} style={{ padding: '0.55rem 1.4rem', borderRadius: '8px', border: 'none', background: editSaving ? 'rgba(56,200,245,0.3)' : 'linear-gradient(135deg,#38c8f5,#1a9bb8)', color: '#000', cursor: editSaving ? 'default' : 'pointer', fontWeight: 800, fontSize: '0.82rem' }}>
+                {editSaving ? 'Guardando...' : 'Guardar cambios'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
