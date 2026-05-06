@@ -17,10 +17,12 @@ export function useSales(
     setLoadingSync(true);
     setSyncError(null);
     try {
+      if (!userId) { setSales([]); setLoadingSync(false); return; }
       const { data, error } = await supabase
         .from('ventas')
         .select('*')
         .eq('fecha', date)
+        .eq('user_id', userId)
         .order('created_at', { ascending: true });
       if (error) throw error;
       const mapped = (data ?? []).map(ventaFromDB) as Sale[];
