@@ -6,33 +6,90 @@ const today = new Date().toISOString().split('T')[0];
 const firstOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   .toISOString().split('T')[0];
 
+const PAGE_SIZE = 50;
+
 export function useAdmin() {
   const [allSales, setAllSales] = useState<AdminSale[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [exactDate, setExactDate] = useState('');
+  const [monthFilter, setMonthFilter] = useState('');
   const [dateFrom, setDateFrom] = useState(firstOfMonth);
   const [dateTo, setDateTo] = useState(today);
-  const [vendorFilter, setVendorFilter] = useState<string>('todos');
+
+  const [search, setSearch] = useState('');
+  const [regionFilter, setRegionFilter] = useState('todas');
+  const [codPublicidad, setCodPublicidad] = useState('');
+  const [vendorSearch, setVendorSearch] = useState('');
+  const [celFilter, setCelFilter] = useState('');
+  const [estadoFilter, setEstadoFilter] = useState<string[]>([]);
+  const [metodoPagoFilter, setMetodoPagoFilter] = useState('todos');
+  const [showFilters, setShowFilters] = useState(true);
+  const [page, setPage] = useState(1);
+
+  const effectiveDateFrom = exactDate || (monthFilter ? `${monthFilter}-01` : dateFrom);
+  const effectiveDateTo = exactDate || (monthFilter ? `${monthFilter}-31` : dateTo);
 
   const loadData = async () => {
     setLoading(true);
     const [sales, profs] = await Promise.all([
-      getAllSalesAdmin(dateFrom, dateTo),
+      getAllSalesAdmin(effectiveDateFrom, effectiveDateTo),
       getAllProfiles(),
     ]);
     setAllSales(sales);
     setProfiles(profs);
     setLoading(false);
+    setPage(1);
   };
 
-  useEffect(() => { loadData(); }, [dateFrom, dateTo]);
+  useEffect(() => { loadData(); }, [effectiveDateFrom, effectiveDateTo]);
 
-  const filteredSales = useMemo(() =>
-    vendorFilter === 'todos'
-      ? allSales
-      : allSales.filter(s => s.vendorName === vendorFilter),
-    [allSales, vendorFilter],
-  );
+  const getRegion = (s: AdminSale) => {
+    if (s.limaMark === 'X') return 'Lima';
+    if (s.provMark === 'X') return 'Provincia';
+    return 'Almacén';
+  };
+
+  const getEstado = (s: AdminSale) => {
+    if (s.metodoPago === 'Contra entrega') return 'CONTRA ENTREGA';
+    if (s.metodoPago === 'Pago completo' || s.metodoPago === 'Yape Import Textil') return 'PAGO COMPLETO';
+    return s.metodoPago?.toUpperCase() || '—';
+  };
+
+  const filteredSales = useMemo(() => {
+    let r = allSales;
+
+    if (search) {
+      const q = search.toLowerCase();
+      r = r.filter(s =>
+        s.nom?.toLowerCase().includes(q) ||
+        s.cel?.toLowerCase().includes(q) ||
+        s.dni?.toLowerCase().includes(q) ||
+        s.vendorName?.toLowerCase().includes(q) ||
+        s.combo?.toLowerCase().includes(q)
+      );
+    }
+    if (regionFilter !== 'todas') r = r.filter(s => getRegion(s) === regionFilter);
+    if (codPublicidad) r = r.filter(s => s.codigoPublicidad?.toLowerCase().includes(codPublicidad.toLowerCase()));
+    if (vendorSearch) r = r.filter(s => s.vendorName?.toLowerCase().includes(vendorSearch.toLowerCase()));
+    if (celFilter) r = r.filter(s => s.cel?.toLowerCase().includes(celFilter.toLowerCase()));
+    if (estadoFilter.length > 0) r = r.filter(s => estadoFilter.includes(getEstado(s)));
+    if (metodoPagoFilter !== 'todos') r = r.filter(s => s.metodoPago === metodoPagoFilter);
+
+    return r;
+  }, [allSales, search, regionFilter, codPublicidad, vendorSearch, celFilter, estadoFilter, metodoPagoFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredSales.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const paginatedSales = filteredSales.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  const clearFilters = () => {
+    setSearch(''); setRegionFilter('todas'); setCodPublicidad('');
+    setVendorSearch(''); setCelFilter(''); setEstadoFilter([]);
+    setMetodoPagoFilter('todos'); setExactDate(''); setMonthFilter('');
+    setDateFrom(firstOfMonth); setDateTo(today); setPage(1);
+  };
 
   const globalStats = useMemo(() => {
     const totalRevenue = filteredSales.reduce((a, s) => a + (Number(s.totalTotal) || 0), 0);
@@ -48,7 +105,7 @@ export function useAdmin() {
 
   const vendorStats = useMemo((): VendorStats[] => {
     const map: Record<string, VendorStats> = {};
-    allSales.forEach(s => {
+    filteredSales.forEach(s => {
       const name = s.vendorName;
       if (!map[name]) map[name] = { id: name, name, salesCount: 0, totalRevenue: 0, totalItems: 0, avgPerSale: 0 };
       map[name].salesCount += 1;
@@ -60,18 +117,23 @@ export function useAdmin() {
       totalRevenue: Math.round(v.totalRevenue * 100) / 100,
       avgPerSale: v.salesCount > 0 ? Math.round((v.totalRevenue / v.salesCount) * 100) / 100 : 0,
     })).sort((a, b) => b.totalRevenue - a.totalRevenue);
-  }, [allSales]);
+  }, [filteredSales]);
 
   return {
-    allSales,
-    filteredSales,
-    profiles,
-    loading,
-    dateFrom, setDateFrom,
-    dateTo, setDateTo,
-    vendorFilter, setVendorFilter,
-    globalStats,
-    vendorStats,
-    refresh: loadData,
+    allSales, filteredSales, paginatedSales, profiles, loading,
+    dateFrom, setDateFrom, dateTo, setDateTo,
+    exactDate, setExactDate, monthFilter, setMonthFilter,
+    search, setSearch,
+    regionFilter, setRegionFilter,
+    codPublicidad, setCodPublicidad,
+    vendorSearch, setVendorSearch,
+    celFilter, setCelFilter,
+    estadoFilter, setEstadoFilter,
+    metodoPagoFilter, setMetodoPagoFilter,
+    showFilters, setShowFilters,
+    page: safePage, setPage, totalPages,
+    globalStats, vendorStats,
+    refresh: loadData, clearFilters,
+    getRegion, getEstado,
   };
 }
