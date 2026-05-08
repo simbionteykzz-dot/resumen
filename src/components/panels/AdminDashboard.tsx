@@ -32,7 +32,6 @@ function saleToForm(s: AdminSale): EditForm {
 
 export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedor }: AdminDashboardProps) {
   const tableRef = useRef<HTMLDivElement>(null);
-  const planillasRef = useRef<HTMLDivElement>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<EditForm | null>(null);
   const [editSaving, setEditSaving] = useState(false);
@@ -59,6 +58,7 @@ export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedo
     eliminatedSales,
   } = useAdmin();
 
+  const [activeTab, setActiveTab] = useState<'ventas' | 'planillas'>('ventas');
   const [historyClient, setHistoryClient] = useState<{ nom: string; cel: string } | null>(null);
   const [showDeleted, setShowDeleted] = useState(false);
   const clientHistory = historyClient
@@ -620,6 +620,40 @@ export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedo
 
       <div style={{ maxWidth: '1500px', margin: '0 auto', padding: '1.5rem 2rem' }}>
 
+        {/* ── Tabs ── */}
+        <div style={{ display: 'flex', gap: '0.3rem', marginBottom: '1.25rem', borderBottom: '2px solid rgba(104,168,119,.2)', paddingBottom: '0' }}>
+          {([
+            { id: 'ventas', label: '📊 Ventas', count: null },
+            { id: 'planillas', label: '📋 Planillas', count: null },
+          ] as const).map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                padding: '0.55rem 1.25rem', fontSize: '0.82rem', fontWeight: 800,
+                border: 'none', borderBottom: activeTab === tab.id ? '2px solid #45834D' : '2px solid transparent',
+                background: activeTab === tab.id ? 'rgba(69,131,77,.08)' : 'transparent',
+                color: activeTab === tab.id ? '#45834D' : '#517861',
+                cursor: 'pointer', borderRadius: '8px 8px 0 0', marginBottom: '-2px',
+                transition: 'all 0.15s',
+              }}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Contenido por tab ── */}
+        {activeTab === 'planillas' ? (
+          <PlanillasPanel
+            filteredSales={filteredSales}
+            dateFrom={dateFrom}
+            dateTo={dateTo}
+            brandFilter={brandFilter}
+            getRegion={getRegion}
+            getEstado={getEstado}
+          />
+        ) : (<>
+
         {/* ── KPI cards (5) ── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: '1rem', marginBottom: '1rem' }}>
           {[
@@ -773,10 +807,6 @@ export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedo
 
           <button onClick={() => setShowFilters(p => !p)} style={{ ...btn('ghost') }}>
             <Filter size={13} /> Filtros {showFilters ? '∧' : '∨'}
-          </button>
-          <button onClick={() => planillasRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            style={{ ...btn('ghost'), color: '#45834D', border: '1px solid rgba(69,131,77,0.3)' }}>
-            📊 Planillas
           </button>
           <button onClick={exportPDF} style={btn('accent')}>
             <Download size={13} /> PDF
@@ -1040,17 +1070,7 @@ export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedo
         </div>
       )}
 
-        {/* ── Planillas ── */}
-        <div ref={planillasRef}>
-        <PlanillasPanel
-          filteredSales={filteredSales}
-          dateFrom={dateFrom}
-          dateTo={dateTo}
-          brandFilter={brandFilter}
-          getRegion={getRegion}
-          getEstado={getEstado}
-        />
-        </div>
+        </>)}
 
       </div>{/* fin contenedor 1500px */}
 

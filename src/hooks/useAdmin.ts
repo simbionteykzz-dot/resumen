@@ -112,6 +112,13 @@ export function useAdmin() {
     if (estadoFilter.length > 0) r = r.filter(s => estadoFilter.includes(getEstado(s)));
     if (metodoPagoFilter !== 'todos') r = r.filter(s => s.metodoPago === metodoPagoFilter);
 
+    // Agrupar por marca: BRV primero, luego OVER (orden alfabético)
+    r.sort((a, b) => {
+      const la = (a.marcaLabel || 'OVER').toUpperCase();
+      const lb = (b.marcaLabel || 'OVER').toUpperCase();
+      return la.localeCompare(lb);
+    });
+
     return r;
   }, [allSales, brandFilter, search, regionFilter, codPublicidad, vendorSearch, celFilter, estadoFilter, metodoPagoFilter]);
 
