@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useAdmin } from '../../hooks/useAdmin';
 import { LogOut, RefreshCw, Filter, Search, Download, X, BarChart3, ShoppingBag, DollarSign, Package, AlertTriangle, Pencil, FileDown, Trash2, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
+import PlanillasPanel from './PlanillasPanel';
 import type { Profile } from '../../types';
 import type { AdminSale } from '../../types';
 import { jsPDF } from 'jspdf';
@@ -1007,6 +1008,16 @@ export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedo
           )}
         </div>
       )}
+
+      {/* ── Planillas ── */}
+      <PlanillasPanel
+        filteredSales={filteredSales}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+        brandFilter={brandFilter}
+        getRegion={getRegion}
+        getEstado={getEstado}
+      />
 
       {/* ── Drawer historial de cliente ── */}
       {historyClient && (

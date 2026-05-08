@@ -186,6 +186,81 @@ export async function restoreVentaDB(id: string): Promise<boolean> {
   return !error;
 }
 
+// ── Planillas ──────────────────────────────────────────────────────
+
+export interface LibroPlanilla {
+  id: string;
+  nombre: string;
+  created_at: string;
+}
+
+export interface HojaPlanilla {
+  id: string;
+  libro_id: string;
+  nombre: string;
+  marca: string;
+  fecha_desde: string;
+  fecha_hasta: string;
+  datos: Record<string, unknown>[];
+  created_at: string;
+}
+
+export async function getLibros(): Promise<LibroPlanilla[]> {
+  const { data, error } = await supabase
+    .from('libros_planilla')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error || !data) return [];
+  return data as LibroPlanilla[];
+}
+
+export async function createLibro(nombre: string): Promise<LibroPlanilla | null> {
+  const { data, error } = await supabase
+    .from('libros_planilla')
+    .insert({ nombre })
+    .select()
+    .single();
+  if (error || !data) return null;
+  return data as LibroPlanilla;
+}
+
+export async function deleteLibro(id: string): Promise<boolean> {
+  const { error } = await supabase.from('libros_planilla').delete().eq('id', id);
+  return !error;
+}
+
+export async function getHojas(libro_id: string): Promise<HojaPlanilla[]> {
+  const { data, error } = await supabase
+    .from('hojas_planilla')
+    .select('*')
+    .eq('libro_id', libro_id)
+    .order('created_at', { ascending: true });
+  if (error || !data) return [];
+  return data as HojaPlanilla[];
+}
+
+export async function createHoja(
+  libro_id: string,
+  nombre: string,
+  marca: string,
+  fecha_desde: string,
+  fecha_hasta: string,
+  datos: Record<string, unknown>[]
+): Promise<HojaPlanilla | null> {
+  const { data, error } = await supabase
+    .from('hojas_planilla')
+    .insert({ libro_id, nombre, marca, fecha_desde, fecha_hasta, datos })
+    .select()
+    .single();
+  if (error || !data) return null;
+  return data as HojaPlanilla;
+}
+
+export async function deleteHoja(id: string): Promise<boolean> {
+  const { error } = await supabase.from('hojas_planilla').delete().eq('id', id);
+  return !error;
+}
+
 export async function restoreVenta(id: string): Promise<boolean> {
   const { error } = await supabase
     .from('ventas')
