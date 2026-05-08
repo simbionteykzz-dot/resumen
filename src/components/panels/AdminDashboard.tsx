@@ -855,7 +855,19 @@ export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedo
                 </tr>
               </thead>
               <tbody>
-                {paginatedSales.map((s, i) => {
+                {(() => {
+                  const sorted = [...paginatedSales].sort((a, b) => {
+                    const la = (a.marcaLabel || 'OVER').toUpperCase();
+                    const lb = (b.marcaLabel || 'OVER').toUpperCase();
+                    return la.localeCompare(lb);
+                  });
+                  let lastBrand = '';
+                  let rowIdx = 0;
+                  return sorted.map((s) => {
+                  const brand = (s.marcaLabel || 'OVER').toUpperCase();
+                  const isNewBrand = brand !== lastBrand;
+                  if (isNewBrand) lastBrand = brand;
+                  const i = rowIdx++;
                   const region = getRegion(s);
                   const estado = getEstado(s);
                   const regionColor = region === 'Lima' ? { bg: 'rgba(30,111,160,.1)', color: '#1e6fa0' } : region === 'Provincia' ? { bg: 'rgba(160,120,10,.1)', color: '#a0780a' } : { bg: 'rgba(81,120,97,.1)', color: '#517861' };
@@ -863,6 +875,19 @@ export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedo
                   const bc = getBrandColor(s.marcaLabel || 'OVER');
                   const isAnulado = estado === 'ANULADO';
                   return (
+                    <>
+                    {isNewBrand && (
+                      <tr key={`brand-${brand}`}>
+                        <td colSpan={16} style={{ padding: '0.4rem 0.75rem', background: bc.bg, borderBottom: `2px solid ${bc.border}`, borderTop: i > 0 ? `2px solid ${bc.border}` : undefined }}>
+                          <span style={{ fontWeight: 900, fontSize: '0.72rem', color: bc.color, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                            {brand === 'OVER' ? '▸ OVERSHARK' : brand === 'BRV' ? '▸ BRAVOS' : `▸ ${brand}`}
+                          </span>
+                          <span style={{ marginLeft: '0.6rem', fontSize: '0.65rem', color: bc.color, opacity: 0.7 }}>
+                            {sorted.filter(x => (x.marcaLabel || 'OVER').toUpperCase() === brand).length} registros
+                          </span>
+                        </td>
+                      </tr>
+                    )}
                     <tr key={s._dbId ?? i}
                       style={{ borderBottom: '1px solid rgba(104,168,119,.2)', background: isAnulado ? 'rgba(239,68,68,.03)' : i % 2 === 0 ? 'transparent' : 'rgba(242,251,245,.6)', transition: 'background 0.15s', opacity: isAnulado ? 0.6 : 1 }}
                       onMouseEnter={e => (e.currentTarget.style.background = 'rgba(69,131,77,.04)')}
@@ -926,8 +951,10 @@ export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedo
                         </div>
                       </td>
                     </tr>
+                    </>
                   );
-                })}
+                  });
+                })()}
                 {paginatedSales.length === 0 && (
                   <tr>
                     <td colSpan={16} style={{ padding: '3rem', textAlign: 'center', color: S.muted, fontSize: '0.85rem' }}>
@@ -943,10 +970,9 @@ export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedo
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
           <Pagination page={page} totalPages={totalPages} onPage={setPage} />
         </div>
-      </div>
 
-      {/* ── Tabla de registros eliminados ── */}
-      {eliminatedSales.length > 0 && (
+        {/* ── Tabla de registros eliminados ── */}
+        {eliminatedSales.length > 0 && (
         <div style={{ marginTop: '1.5rem', background: 'rgba(255,255,255,.97)', border: '1px solid rgba(146,64,14,.25)', borderRadius: '12px', overflow: 'hidden' }}>
           <button
             onClick={() => setShowDeleted(v => !v)}
@@ -1009,15 +1035,17 @@ export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedo
         </div>
       )}
 
-      {/* ── Planillas ── */}
-      <PlanillasPanel
-        filteredSales={filteredSales}
-        dateFrom={dateFrom}
-        dateTo={dateTo}
-        brandFilter={brandFilter}
-        getRegion={getRegion}
-        getEstado={getEstado}
-      />
+        {/* ── Planillas ── */}
+        <PlanillasPanel
+          filteredSales={filteredSales}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          brandFilter={brandFilter}
+          getRegion={getRegion}
+          getEstado={getEstado}
+        />
+
+      </div>{/* fin contenedor 1500px */}
 
       {/* ── Drawer historial de cliente ── */}
       {historyClient && (
