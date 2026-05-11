@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, X, Tag, Shuffle } from 'lucide-react';
+import { Plus, X, Tag, Shuffle, ChevronDown } from 'lucide-react';
 import {
   POLOS_CATALOGO_OVERSHARK, POL_VARIANTES_OVERSHARK, PROMOS_DATA, MIX_PROMOS_DATA, PROMOS_GROUPS, TALLAS_SMLXL,
   POLOS_CATALOGO_BRAVOS, BRV_VARIANTES, BRV_PROMOS_DATA, PRODUCT_NAME_TO_CP,
@@ -18,6 +18,7 @@ export default function ProductosPanel({ products, setProducts, customComboName,
   const [newPromoQty, setNewPromoQty] = useState("1");
   const [colorInputs, setColorInputs] = useState<Record<number, string>>({});
   const [activePromoGroup, setActivePromoGroup] = useState<string | null>(null);
+  const [mixOpen, setMixOpen] = useState(true);
 
   const addProduct = () =>
     setProducts([...products, { id: Date.now(), name: "", size: "", qty: 1, colorLines: [], promoName: "" }]);
@@ -39,6 +40,7 @@ export default function ProductosPanel({ products, setProducts, customComboName,
     const newProducts = pData.list.map((item, i) => ({
       id: ts + i, name: item.n, size: "", qty: item.q,
       colorLines: [], promoName: pData.comboData, promoPricePerUnit: pricePerUnit,
+      promoInstance: String(ts),
     }));
     setProducts((prev: any[]) => [...prev, ...newProducts]);
     setCustomComboName((prev: string) => prev ? prev + " + " + pData.comboData : pData.comboData);
@@ -102,11 +104,8 @@ export default function ProductosPanel({ products, setProducts, customComboName,
     return acc + qty;
   }, 0);
 
-  const promoItemsLabel = (list: { n: string; q: number }[]) => {
-    if (list.length === 1) return `${list[0].q}× ${list[0].n}`;
-    const total = list.reduce((a, i) => a + i.q, 0);
-    return `${total} prendas mix`;
-  };
+  const promoItemsLabel = (list: { n: string; q: number }[]) =>
+    list.map(i => `${i.q}× ${i.n}`).join(' · ');
 
   const variantLabel = (v: { list: { n: string; q: number }[]; comboData: string }) => {
     const qty = v.list.reduce((a, i) => a + i.q, 0);
@@ -212,19 +211,28 @@ export default function ProductosPanel({ products, setProducts, customComboName,
         {/* Promociones Mix (solo Overshark) */}
         {!isBravos && (
           <div className="promo-block promo-block--mix">
-            <div className="promo-block-header">
+            <button className="promo-block-header promo-block-header--toggle" onClick={() => setMixOpen(v => !v)}>
               <Shuffle size={13} />
               <span>Promociones Mix</span>
-            </div>
-            <div className="promo-mix-grid">
-              {Object.entries(MIX_PROMOS_DATA).map(([k, v]) => (
-                <button key={k} className="promo-mix-card" onClick={() => handlePromoLoad(k)}>
-                  <span className="promo-mix-name">{v.name}</span>
-                  <span className="promo-mix-items">{promoItemsLabel(v.list)}</span>
-                  <span className="promo-mix-price">S/ {v.price}</span>
-                </button>
-              ))}
-            </div>
+              <ChevronDown size={13} className={`promo-mix-chevron${mixOpen ? ' promo-mix-chevron--open' : ''}`} />
+            </button>
+            {mixOpen && (
+              <div className="promo-mix-grid">
+                {Object.entries(MIX_PROMOS_DATA).map(([k, v]) => {
+                  const totalQty = v.list.reduce((a, i) => a + i.q, 0);
+                  return (
+                    <button key={k} className="promo-mix-card" onClick={() => handlePromoLoad(k)}>
+                      <div className="promo-mix-card-head">
+                        <span className="promo-mix-name">{v.name}</span>
+                        <span className="promo-mix-qty">{totalQty}×</span>
+                      </div>
+                      <span className="promo-mix-items">{promoItemsLabel(v.list)}</span>
+                      <span className="promo-mix-price">{v.price > 0 ? `S/ ${v.price}` : '—'}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>

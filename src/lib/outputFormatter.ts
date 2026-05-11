@@ -35,6 +35,8 @@ export function buildBoostersText(
     if (recs?.length) parts.push(`\n🛍️ *¿Ya conoces nuestro ${recs[0]}?* Combina perfecto con tu pedido — ¡pregúntame!`);
   }
   if (boosters.descuento) parts.push(`\n🎯 *En tu próxima compra tienes precio especial.* ¡Guarda este chat!`);
+  if (boosters.garantia) parts.push(`\n✅ *Calidad garantizada.* Si no quedas satisfecho con tu pedido, te buscamos solución`);
+  if (boosters.referido) parts.push(`\n💬 *¿Tienes amigos que les guste la moda?* Recomiéndanos — tú y tu amigo ganan precio especial`);
   return parts.length > 0 ? `\n${parts.join('')}` : '';
 }
 
@@ -61,16 +63,19 @@ export function getProductString(
   if (products.length === 0 && customComboName.trim() === '') return '';
   const groups: Record<string, Product[]> = {};
   const groupOrder: string[] = [];
+  const groupLabels: Record<string, string> = {};
   products.forEach(p => {
-    const pName = p.promoName || '';
-    if (!groups[pName]) { groups[pName] = []; groupOrder.push(pName); }
-    groups[pName].push(p);
+    const label = p.promoName || '';
+    const key = p.promoInstance ? `${label}__${p.promoInstance}` : label;
+    if (!groups[key]) { groups[key] = []; groupOrder.push(key); groupLabels[key] = label; }
+    groups[key].push(p);
   });
   const finalBlocks: string[] = [];
-  groupOrder.forEach(gName => {
+  groupOrder.forEach(key => {
+    const gName = groupLabels[key];
     const isCustom = gName !== '';
     const productLines: string[] = [];
-    groups[gName].forEach(p => {
+    groups[key].forEach(p => {
       const sizePart = p.size ? ` (talla ${p.size})` : '';
       if (p.colorLines && p.colorLines.length > 0) {
         const subs: string[] = [];
@@ -165,15 +170,19 @@ export function buildOutputText(params: {
   const productStr = getProductString(products, customComboName, VARIANTES_ACTIVOS);
   const boostersText = buildBoostersText(boosters, modelosEnPedido);
 
+  const pubStr = clientData.codigoPublicidad?.trim()
+    ? `\n📣 Código: ${clientData.codigoPublicidad.trim()}`
+    : '';
+
   let t = '';
   if (tab === 'prov') {
-    t = `➖${brandTag} — DATOS PROVINCIA 🚌🚌\n🫵🏻Nombre: ${clientData.nombre}\n📲 Celular: ${clientData.celular}\n💳Numero DNI : ${clientData.dni}\n🗣️Provincia: ${clientData.provincia}\n😎 Departamento: ${clientData.depto}\n📌SEDE de agencia: *(${clientData.sede || 'Shalom'})*` +
+    t = `➖${brandTag} — DATOS PROVINCIA 🚌🚌\n🫵🏻Nombre: ${clientData.nombre}\n📲 Celular: ${clientData.celular}\n💳Numero DNI : ${clientData.dni}\n🗣️Provincia: ${clientData.provincia}\n😎 Departamento: ${clientData.depto}\n📌SEDE de agencia: *(${clientData.sede || 'Shalom'})*${pubStr}` +
       cuentaBlock + productStr + cadenitaStr + `\n\nVENDEDOR ${vendedorName.toUpperCase()}\n\n⏰ Te enviarán tu voucher entre 48 a 72 horas máximo` + boostersText;
   } else if (tab === 'lima') {
-    t = `➖${brandTag} — DATOS DELIVERY 🏍️🏍️\n🫵🏻Nombre: ${clientData.nombre}\n📲 Celular: ${clientData.celular}\n😎 Distrito: ${clientData.distrito}\n📌Ubicacion: ${clientData.ubicacion}` +
+    t = `➖${brandTag} — DATOS DELIVERY 🏍️🏍️\n🫵🏻Nombre: ${clientData.nombre}\n📲 Celular: ${clientData.celular}\n💳Numero DNI : ${clientData.dni}\n😎 Distrito: ${clientData.distrito}\n📌Ubicacion: ${clientData.ubicacion}${pubStr}` +
       cuentaBlock + productStr + cadenitaStr + `\n\nVENDEDOR ${vendedorName.toUpperCase()}\n\n⏰ Los pedidos salen al día siguiente entre las 11 AM y a lo largo de la tarde/noche del día` + boostersText;
   } else {
-    t = `➖${brandTag} — RECOJO EN ALMACÉN 🏭🏭\n🫵🏻Nombre: ${clientData.nombre}\n📲 Celular: ${clientData.celular}\n💳Numero DNI : ${clientData.dni}` +
+    t = `➖${brandTag} — RECOJO EN ALMACÉN 🏭🏭\n🫵🏻Nombre: ${clientData.nombre}\n📲 Celular: ${clientData.celular}\n💳Numero DNI : ${clientData.dni}${pubStr}` +
       cuentaBlock + productStr + cadenitaStr + `\n\nVENDEDOR ${vendedorName.toUpperCase()}` + boostersText;
   }
   return t.replace(/\s+$/, '');

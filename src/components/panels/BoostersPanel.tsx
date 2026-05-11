@@ -1,5 +1,5 @@
 import React from 'react';
-import { Gift, Flame, Users, Tag, MessageCircle, Sparkles, ChevronUp, ChevronDown, Check } from 'lucide-react';
+import { Gift, Flame, Users, Tag, MessageCircle, Sparkles, ChevronUp, ChevronDown, Check, ShieldCheck, UserPlus } from 'lucide-react';
 
 interface BoosterState {
   cadenitas: number;
@@ -8,6 +8,8 @@ interface BoosterState {
   recomendacion: boolean;
   descuento: boolean;
   fraseVenta: boolean;
+  garantia: boolean;
+  referido: boolean;
 }
 
 interface BoostersPanelProps {
@@ -25,11 +27,13 @@ type BoosterDef = {
 };
 
 const BOOSTERS: BoosterDef[] = [
-  { key: 'urgencia',     label: 'Urgencia',         sub: '"⚡ Últimas unidades en este precio"',          icon: <Flame size={14} />,          color: '239,68,68'    },
-  { key: 'socialProof',  label: 'Prueba social',     sub: '"🔥 +500 clientes satisfechos"',                icon: <Users size={14} />,          color: '56,200,245'   },
-  { key: 'recomendacion',label: 'Cross-sell',        sub: 'Recomienda otro producto relacionado',           icon: <Tag size={14} />,            color: '104,168,119'  },
-  { key: 'descuento',    label: 'Próxima compra',    sub: '"🎯 Descuento especial en tu siguiente pedido"', icon: <Tag size={14} style={{ transform: 'rotate(-15deg)' }} />, color: '104,168,119' },
-  { key: 'fraseVenta',   label: 'Frase del producto',sub: 'Agrega frase según lo que compra',              icon: <MessageCircle size={14} />,  color: '250,204,21'   },
+  { key: 'urgencia',     label: 'Urgencia',          sub: '"⚡ Últimas unidades en este precio"',           icon: <Flame size={14} />,                                       color: '239,68,68'    },
+  { key: 'socialProof',  label: 'Prueba social',      sub: '"🔥 +500 clientes satisfechos"',                 icon: <Users size={14} />,                                       color: '56,200,245'   },
+  { key: 'recomendacion',label: 'Cross-sell',         sub: 'Recomienda otro producto relacionado',            icon: <Tag size={14} />,                                         color: '104,168,119'  },
+  { key: 'descuento',    label: 'Próxima compra',     sub: '"🎯 Descuento especial en tu siguiente pedido"',  icon: <Tag size={14} style={{ transform: 'rotate(-15deg)' }} />, color: '104,168,119'  },
+  { key: 'fraseVenta',   label: 'Frase del producto', sub: 'Agrega frase según lo que compra',               icon: <MessageCircle size={14} />,                               color: '250,204,21'   },
+  { key: 'garantia',     label: 'Garantía',           sub: '"✅ Calidad garantizada — si no quedas satisfecho, te apoyamos"', icon: <ShieldCheck size={14} />,               color: '34,197,94'    },
+  { key: 'referido',     label: 'Referido',           sub: '"💬 Recomiéndanos y tú y tu amigo ganan precio especial"',       icon: <UserPlus size={14} />,                  color: '168,85,247'   },
 ];
 
 export default function BoostersPanel({ boosters, onChange, productCount: _productCount }: BoostersPanelProps) {
@@ -64,7 +68,7 @@ export default function BoostersPanel({ boosters, onChange, productCount: _produ
           border: '1px solid rgba(250,204,21,0.25)', color: '#facc15',
           letterSpacing: '0.04em',
         }}>
-          {[boosters.urgencia, boosters.socialProof, boosters.recomendacion, boosters.descuento, boosters.fraseVenta].filter(Boolean).length + (boosters.cadenitas > 0 ? 1 : 0)} activos
+          {[boosters.urgencia, boosters.socialProof, boosters.recomendacion, boosters.descuento, boosters.fraseVenta, boosters.garantia, boosters.referido].filter(Boolean).length + (boosters.cadenitas > 0 ? 1 : 0)} activos
         </span>
       </div>
 

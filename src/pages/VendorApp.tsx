@@ -24,6 +24,7 @@ import type { BrandKey } from '../lib/brands';
 import { calcularTotalPagar, calcularDebe } from '../lib/pricing';
 import { buildOutputText, getModelosEnPedido } from '../lib/outputFormatter';
 import { buildSale } from '../lib/saleBuilder';
+import { POLOS_CATALOGO_OVERSHARK, POLOS_CATALOGO_BRAVOS } from '../lib/data';
 import type { ClientData, CuentaData, BoosterState, Profile } from '../types';
 import type { DeliveryTab } from '../lib/pricing';
 
@@ -79,6 +80,7 @@ export default function VendorApp({ profile, profiles, onSwitchToAdmin }: Vendor
   const [boosters, setBoosters] = useState<BoosterState>({
     cadenitas: 1, urgencia: false, socialProof: false,
     recomendacion: false, descuento: false, fraseVenta: true,
+    garantia: false, referido: false,
   });
   const [metaDiaria, setMetaDiaria] = useState<number>(
     () => parseInt(localStorage.getItem('overshark_meta') || '20'),
@@ -321,14 +323,16 @@ export default function VendorApp({ profile, profiles, onSwitchToAdmin }: Vendor
         {/* Tabs de entrega */}
         <div className="tabs-wrap" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border2)', paddingBottom: '1rem' }}>
           <TabBar tabs={DELIVERY_TABS} active={tab} onChange={id => setTab(id)} />
-          <button
-            className="btn-borrar-todo"
-            onClick={clearAll}
-            title="Borra todos los datos de golpe"
-            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.6rem 1.25rem', borderRadius: '40px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.2)', fontWeight: 700, cursor: 'pointer' }}
-          >
-            <Trash2 size={16} /> Borrar todo
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button
+              className="btn-borrar-todo"
+              onClick={clearAll}
+              title="Borra todos los datos de golpe"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.6rem 1.25rem', borderRadius: '40px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.2)', fontWeight: 700, cursor: 'pointer' }}
+            >
+              <Trash2 size={16} /> Borrar todo
+            </button>
+          </div>
         </div>
 
         {/* Grid principal */}
@@ -360,29 +364,61 @@ export default function VendorApp({ profile, profiles, onSwitchToAdmin }: Vendor
           <RankingPanel sales={sales} />
 
           {planillaMode === 'live' && (
-            <PlanillaPanel
-              sales={sales} deletedSales={deletedSales}
-              selectedDate={selectedDate} onDateChange={setSelectedDate}
-              loadingSync={loadingSync} syncError={syncError}
-              onDeleteSale={deleteSale} onRestoreSale={restoreSale}
-              profiles={profiles}
-              title="Live"
-              sourceFilter="live"
-              exportId="sales-sheet-live"
-            />
+            <>
+              <PlanillaPanel
+                sales={sales} deletedSales={deletedSales}
+                selectedDate={selectedDate} onDateChange={setSelectedDate}
+                loadingSync={loadingSync} syncError={syncError}
+                onDeleteSale={deleteSale} onRestoreSale={restoreSale}
+                profiles={profiles}
+                currentUserName={vendedorName}
+                title="Live"
+                sourceFilter="live"
+                exportId="sales-sheet-live-over"
+                forcedBrand="OVER"
+              />
+              <PlanillaPanel
+                sales={sales} deletedSales={deletedSales}
+                selectedDate={selectedDate} onDateChange={setSelectedDate}
+                loadingSync={loadingSync} syncError={syncError}
+                onDeleteSale={deleteSale} onRestoreSale={restoreSale}
+                profiles={profiles}
+                currentUserName={vendedorName}
+                title="Live"
+                sourceFilter="live"
+                exportId="sales-sheet-live-brv"
+                forcedBrand="BRV"
+              />
+            </>
           )}
 
           {planillaMode === 'publicidad' && (
-            <PlanillaPanel
-              sales={sales} deletedSales={deletedSales}
-              selectedDate={selectedDate} onDateChange={setSelectedDate}
-              loadingSync={loadingSync} syncError={syncError}
-              onDeleteSale={deleteSale} onRestoreSale={restoreSale}
-              profiles={profiles}
-              title="Publicidad"
-              sourceFilter="publicidad"
-              exportId="sales-sheet-publicidad"
-            />
+            <>
+              <PlanillaPanel
+                sales={sales} deletedSales={deletedSales}
+                selectedDate={selectedDate} onDateChange={setSelectedDate}
+                loadingSync={loadingSync} syncError={syncError}
+                onDeleteSale={deleteSale} onRestoreSale={restoreSale}
+                profiles={profiles}
+                currentUserName={vendedorName}
+                title="Publicidad"
+                sourceFilter="publicidad"
+                exportId="sales-sheet-publicidad-over"
+                forcedBrand="OVER"
+              />
+              <PlanillaPanel
+                sales={sales} deletedSales={deletedSales}
+                selectedDate={selectedDate} onDateChange={setSelectedDate}
+                loadingSync={loadingSync} syncError={syncError}
+                onDeleteSale={deleteSale} onRestoreSale={restoreSale}
+                profiles={profiles}
+                currentUserName={vendedorName}
+                title="Publicidad"
+                sourceFilter="publicidad"
+                exportId="sales-sheet-publicidad-brv"
+                forcedBrand="BRV"
+              />
+            </>
           )}
         </div>
       </div>

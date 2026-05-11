@@ -15,7 +15,6 @@ export const FRASES_RESUMEN: Record<string, string[]> = {
     "Elegante pero relajada. ¡Perfecta para cualquier ocasión!",
     "Botones + textura waffle = tu outfit sube de nivel.",
   ],
-
   "CAMISERO PIKE": [
     "Tela piqué clásica que grita calidad en cada detalle.",
     "Duradero y con cuerpo — se mantiene como nuevo siempre.",
@@ -40,11 +39,6 @@ export const FRASES_RESUMEN: Record<string, string[]> = {
     "Tu mejor amigo para los días frescos. ¡Imprescindible!",
     "Tela jersey premium — abrigado sin sentirte pesado.",
     "7 por S/99 — stockéate para todo el invierno.",
-  ],
-  "OVERSIZE": [
-    "Corte holgado + comodidad total = tendencia PURA.",
-    "Streetwear de calidad real. ¡No es un oversize cualquiera!",
-    "Se ve increíble con joggers, jeans o shorts.",
   ],
   "WAFFLE": [
     "La textura Waffle es adictiva — pruébala y no querrás otra cosa.",
@@ -75,15 +69,14 @@ export const FRASES_RESUMEN: Record<string, string[]> = {
 
 // Cross-sell recommendations: product name suggestions per model
 export const RECOMENDACIONES_RESUMEN: Record<string, string[]> = {
-  "BABY TY":             ["Baby Ty Manga Larga", "Oversize"],
+  "BABY TY":             ["Baby Ty Manga Larga", "Baby Ty Escotado"],
   "BABY TY MANGA":       ["Baby Ty manga corta", "Camisa Waffle"],
   "CAMISA WAFFLE":       ["Waffle Camisero", "Cuello Chino Waffle"],
   "CAMISERO PIKE":       ["Cuello Notch Piqué", "Waffle Camisero"],
-  "CLASICO":             ["Oversize", "Waffle"],
+  "CLASICO":             ["Waffle", "Camisero Piqué"],
   "CUELLO CHINO":        ["Cuello Chino Waffle", "Cuello Notch Piqué"],
   "CUELLO CHINO WAFFLE": ["Cuello Chino clásico", "Waffle Camisero"],
   "JERSEY MANGA LARGA":  ["Waffle Manga Larga", "Clásico"],
-  "OVERSIZE":            ["Clásico", "Waffle"],
   "WAFFLE":              ["Waffle Camisero", "Waffle Manga Larga"],
   "WAFFLE CAMISERO":     ["Waffle manga corta", "Camisa Waffle"],
   "WAFFLE MANGA LARGA":  ["Waffle manga corta", "Jersey Manga Larga"],

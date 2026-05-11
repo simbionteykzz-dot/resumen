@@ -218,6 +218,8 @@ interface PlanillaPanelProps {
   onDeleteSale?: (index: number) => void;
   onRestoreSale?: (dbId: string) => void;
   profiles?: Profile[];
+  /** Nombre del usuario autenticado — se fija en la celda VENDEDOR sin permitir edición */
+  currentUserName?: string;
   /** Etiqueta que aparece en el encabezado: "Planilla de ventas · {title}" */
   title?: string;
   /**
@@ -228,23 +230,22 @@ interface PlanillaPanelProps {
   sourceFilter?: 'live' | 'publicidad';
   /** ID del div exportable (único por instancia). Por defecto "sales-sheet-export". */
   exportId?: string;
+  /** Fija el filtro de marca y oculta los botones de selección de marca */
+  forcedBrand?: 'OVER' | 'BRV';
 }
 
 export default function PlanillaPanel({
   sales, deletedSales = [], selectedDate, onDateChange,
   loadingSync, syncError, onDeleteSale, onRestoreSale, profiles = [],
-  title, sourceFilter, exportId = 'sales-sheet-export',
+  currentUserName, title, sourceFilter, exportId = 'sales-sheet-export', forcedBrand,
 }: PlanillaPanelProps) {
   const [exporting, setExporting] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
-  const [selectedVendor, setSelectedVendor] = useState('');
-  const [brandView, setBrandView] = useState<'todas' | 'OVER' | 'BRV'>('todas');
+  const [brandView, setBrandView] = useState<'todas' | 'OVER' | 'BRV'>(forcedBrand ?? 'todas');
   const [sourceView, setSourceView] = useState('todas');
   const [blankMode, setBlankMode] = useState(false);
 
-  const vendorLabel = selectedVendor
-    ? (profiles.find(p => p.id === selectedVendor)?.full_name ?? 'VENDEDOR').toUpperCase()
-    : 'VENDEDOR';
+  const vendorLabel = currentUserName ?? 'VENDEDOR';
 
   // Pre-filtrado por sourceFilter (cuando el panel está dedicado a una fuente)
   const preFiltered = sourceFilter
@@ -256,10 +257,12 @@ export default function PlanillaPanel({
 
   const uniqueSources = ['todas', ...Array.from(new Set(preFiltered.map(s => s.codigoPublicidad?.trim() || 'Live').filter(Boolean)))];
 
+  const effectiveBrand = forcedBrand ?? brandView;
+
   const visibleSales = blankMode
     ? []
     : preFiltered.filter(s => {
-        const matchBrand = brandView === 'todas' || (s.marcaLabel || 'OVER').toUpperCase().includes(brandView);
+        const matchBrand = effectiveBrand === 'todas' || (s.marcaLabel || 'OVER').toUpperCase().includes(effectiveBrand);
         const matchSource = sourceView === 'todas' || (s.codigoPublicidad?.trim() || 'Live') === sourceView;
         return matchBrand && matchSource;
       });
@@ -295,15 +298,21 @@ export default function PlanillaPanel({
 
       // Siempre incluir cierre de caja como página 2
       pdf.addPage();
-      const cierreSales = sourceFilter
+      let cierreSales = sourceFilter
         ? sales.filter((s: any) => {
             const src = (s.codigoPublicidad?.trim() || 'Live');
             return sourceFilter === 'live' ? src === 'Live' : src !== 'Live';
           })
         : sales;
+      if (forcedBrand) {
+        cierreSales = cierreSales.filter((s: any) => (s.marcaLabel || 'OVER').toUpperCase().includes(forcedBrand));
+      }
       drawCierreCajaPage(pdf, cierreSales, pageW, pageH);
 
-      const suffix = sourceFilter === 'live' ? '-live' : sourceFilter === 'publicidad' ? '-publicidad' : '';
+      const suffix = [
+        sourceFilter === 'live' ? '-live' : sourceFilter === 'publicidad' ? '-publicidad' : '',
+        forcedBrand ? `-${forcedBrand.toLowerCase()}` : '',
+      ].join('');
       pdf.save(`planilla-ventas${suffix}-${new Date().toISOString().split('T')[0]}.pdf`);
     } catch (err) {
       console.error('Error exporting PDF:', err);
@@ -312,7 +321,8 @@ export default function PlanillaPanel({
     }
   };
 
-  const headingLabel = title ? `Planilla de ventas · ${title}` : 'Planilla de ventas';
+  const brandSuffix = forcedBrand === 'OVER' ? ' · Overshark' : forcedBrand === 'BRV' ? ' · Bravos' : '';
+  const headingLabel = title ? `Planilla de ventas · ${title}${brandSuffix}` : `Planilla de ventas${brandSuffix}`;
 
   return (
     <div className="panel always" style={{ marginTop: '1.25rem' }}>
@@ -324,7 +334,7 @@ export default function PlanillaPanel({
           <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', color: 'var(--muted)', flexWrap: 'wrap', alignItems: 'center' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
               <BarChart3 size={14} /> <strong>{blankMode ? 0 : visibleSales.length}</strong> ventas
-              {!blankMode && brandView !== 'todas' && <span style={{ color: 'var(--accent)' }}>({brandView})</span>}
+              {!blankMode && effectiveBrand !== 'todas' && <span style={{ color: 'var(--accent)' }}>({effectiveBrand})</span>}
               {!blankMode && sourceView !== 'todas' && <span style={{ color: '#7C3AED' }}>({sourceView})</span>}
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -360,23 +370,25 @@ export default function PlanillaPanel({
             </div>
           )}
 
-          {/* Filtro por marca */}
-          <div style={{ display: 'flex', gap: '0.3rem', background: 'var(--surface2)', borderRadius: '8px', padding: '0.2rem', border: '1px solid var(--border)' }}>
-            {(['todas', 'OVER', 'BRV'] as const).map(b => (
-              <button
-                key={b}
-                onClick={() => { setBrandView(b); setBlankMode(false); }}
-                style={{
-                  padding: '0.3rem 0.65rem', fontSize: '0.75rem', fontWeight: 800,
-                  border: 'none', borderRadius: '6px', cursor: 'pointer',
-                  background: !blankMode && brandView === b ? 'var(--accent)' : 'transparent',
-                  color: !blankMode && brandView === b ? '#fff' : 'var(--muted)',
-                  transition: 'all 0.15s',
-                }}>
-                {b === 'todas' ? 'Todas' : b}
-              </button>
-            ))}
-          </div>
+          {/* Filtro por marca (oculto cuando la marca está forzada) */}
+          {!forcedBrand && (
+            <div style={{ display: 'flex', gap: '0.3rem', background: 'var(--surface2)', borderRadius: '8px', padding: '0.2rem', border: '1px solid var(--border)' }}>
+              {(['todas', 'OVER', 'BRV'] as const).map(b => (
+                <button
+                  key={b}
+                  onClick={() => { setBrandView(b); setBlankMode(false); }}
+                  style={{
+                    padding: '0.3rem 0.65rem', fontSize: '0.75rem', fontWeight: 800,
+                    border: 'none', borderRadius: '6px', cursor: 'pointer',
+                    background: !blankMode && brandView === b ? 'var(--accent)' : 'transparent',
+                    color: !blankMode && brandView === b ? '#fff' : 'var(--muted)',
+                    transition: 'all 0.15s',
+                  }}>
+                  {b === 'todas' ? 'Todas' : b}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Planilla en blanco */}
           <button
@@ -393,23 +405,6 @@ export default function PlanillaPanel({
             <FileDown size={14} /> {blankMode ? 'Ver con ventas' : 'Planilla vacía'}
           </button>
 
-          {/* Selector de vendedor */}
-          {profiles.length > 0 && (
-            <select
-              value={selectedVendor}
-              onChange={e => setSelectedVendor(e.target.value)}
-              style={{
-                background: 'var(--surface2)', border: '1px solid var(--border)',
-                borderRadius: '8px', color: 'var(--text)', padding: '0.45rem 0.75rem',
-                fontSize: '0.85rem', cursor: 'pointer',
-              }}
-            >
-              <option value="">Vendedor en planilla...</option>
-              {profiles.map(p => (
-                <option key={p.id} value={p.id}>{p.full_name}</option>
-              ))}
-            </select>
-          )}
           <input
             type="date"
             value={selectedDate}
@@ -542,7 +537,7 @@ export default function PlanillaPanel({
               </tr>
               <tr>
                 <td colSpan={4} className="f-cel" contentEditable suppressContentEditableWarning></td>
-                <td colSpan={2} className="f-vend" contentEditable suppressContentEditableWarning>{vendorLabel}</td>
+                <td colSpan={2} className="f-vend">{vendorLabel}</td>
                 <td colSpan={4} className="f-firma" contentEditable suppressContentEditableWarning></td>
                 <td colSpan={4} className="f-fecha" contentEditable suppressContentEditableWarning>{new Date().toLocaleDateString('es-PE')}</td>
                 <td colSpan={3} className="f-obs" contentEditable suppressContentEditableWarning></td>

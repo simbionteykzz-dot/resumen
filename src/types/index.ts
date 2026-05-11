@@ -27,6 +27,7 @@ export interface Product {
   size?: string;
   colorLines?: ColorLine[];
   promoName?: string;
+  promoInstance?: string;
   promoPricePerUnit?: number;
 }
 
@@ -64,6 +65,8 @@ export interface BoosterState {
   recomendacion: boolean;
   descuento: boolean;
   fraseVenta: boolean;
+  garantia: boolean;
+  referido: boolean;
 }
 
 export interface ToastState {

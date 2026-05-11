@@ -1,5 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { ClipboardList, Copy, Check, PackagePlus, Lock } from 'lucide-react';
+import { ClipboardList, Copy, Check, PackagePlus, Lock, Eye, EyeOff } from 'lucide-react';
+
+function renderWAText(text: string): React.ReactNode {
+  const lines = text.split('\n');
+  return lines.map((line, i) => {
+    const parts = line.split(/(\*[^*]+\*)/g);
+    const isSection = /^-\s.+\s-$/.test(line.trim());
+    return (
+      <React.Fragment key={i}>
+        {isSection ? (
+          <span className="output-section-label">
+            {line.trim().replace(/^-\s/, '').replace(/\s-$/, '')}
+          </span>
+        ) : (
+          parts.map((part, j) =>
+            /^\*[^*]+\*$/.test(part)
+              ? <strong key={j}>{part.slice(1, -1)}</strong>
+              : <span key={j}>{part}</span>
+          )
+        )}
+        {i < lines.length - 1 && <br />}
+      </React.Fragment>
+    );
+  });
+}
 
 export default function OutputPanel({
   outputText,
@@ -15,6 +39,7 @@ export default function OutputPanel({
   const [copied, setCopied] = useState(false);
   const [added, setAdded] = useState(false);
   const [registered, setRegistered] = useState(false);
+  const [showRaw, setShowRaw] = useState(false);
 
   useEffect(() => {
     setRegistered(false);
@@ -65,13 +90,47 @@ export default function OutputPanel({
     <div className="panel always" style={{ marginTop: '1.25rem' }}>
       <div className="cliente-panel-head">
         <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <ClipboardList size={18} /> Texto para copiar
+          <ClipboardList size={18} /> Resumen del pedido
         </h2>
+        {outputText.trim() && (
+          <button
+            onClick={() => setShowRaw(v => !v)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '0.35rem',
+              background: 'var(--surface2)', border: '1px solid var(--border)',
+              borderRadius: '8px', padding: '0.35rem 0.75rem',
+              fontSize: '0.75rem', fontWeight: 700, color: 'var(--muted)',
+              cursor: 'pointer',
+            }}
+          >
+            {showRaw ? <><EyeOff size={13} /> Preview</> : <><Eye size={13} /> Raw</>}
+          </button>
+        )}
       </div>
-      <textarea value={outputText} readOnly spellCheck={false} style={{ width: '100%', minHeight: '200px' }} />
+
+      {showRaw ? (
+        <textarea
+          value={outputText}
+          readOnly
+          spellCheck={false}
+          style={{ width: '100%', minHeight: '220px' }}
+        />
+      ) : (
+        <div className="output-preview">
+          {outputText.trim()
+            ? renderWAText(outputText)
+            : (
+              <div className="output-empty">
+                <div style={{ fontSize: '1.6rem', marginBottom: '0.4rem' }}>📋</div>
+                <div>El resumen aparecerá aquí una vez que completes los datos del pedido</div>
+              </div>
+            )
+          }
+        </div>
+      )}
+
       <div className="actions" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.75rem' }}>
 
-        {/* Copiar — bloqueado hasta registrar */}
         <button
           className="btn btn-primary"
           onClick={handleCopy}
@@ -86,7 +145,6 @@ export default function OutputPanel({
               : <><Copy size={16} /> Copiar</>}
         </button>
 
-        {/* WhatsApp — bloqueado hasta registrar */}
         <button
           onClick={handleWhatsApp}
           disabled={!registered}
@@ -112,7 +170,6 @@ export default function OutputPanel({
               </>}
         </button>
 
-        {/* Registrar venta — requiere nombre o celular */}
         <button
           className="btn btn-primary"
           onClick={handleAddSale}
