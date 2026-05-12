@@ -9,7 +9,7 @@ export function useSales(
   const [sales, setSales] = useState<Sale[]>([]);
   const [deletedSales, setDeletedSales] = useState<Sale[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>(
-    () => new Date().toISOString().split('T')[0],
+    () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; },
   );
   const [loadingSync, setLoadingSync] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -57,7 +57,8 @@ export function useSales(
     setSales(newSales);
     localStorage.setItem('overshark_sales', JSON.stringify(newSales));
 
-    const today = new Date().toISOString().split('T')[0];
+    const _d = new Date();
+    const today = `${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
     const { error } = await supabase
       .from('ventas')
       .insert(ventaToDB(newSale, today, userId));

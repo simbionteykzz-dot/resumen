@@ -4,9 +4,9 @@ import type { AdminSale, Profile, VendorStats } from '../types';
 import type { VentaDB } from '../lib/supabase';
 import { getCodigoProducto } from '../lib/data';
 
-const today = new Date().toISOString().split('T')[0];
-const firstOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-  .toISOString().split('T')[0];
+const _now = new Date();
+const today = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}-${String(_now.getDate()).padStart(2,'0')}`;
+const firstOfMonth = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}-01`;
 
 const PAGE_SIZE = 50;
 
