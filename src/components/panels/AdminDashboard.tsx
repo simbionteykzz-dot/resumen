@@ -1,6 +1,6 @@
 import { useRef, useState, Fragment } from 'react';
 import { useAdmin } from '../../hooks/useAdmin';
-import { LogOut, RefreshCw, Filter, Search, Download, X, BarChart3, ShoppingBag, DollarSign, Package, AlertTriangle, Pencil, FileDown, Trash2, RotateCcw, ChevronDown, ChevronUp, Archive, History } from 'lucide-react';
+import { LogOut, RefreshCw, Filter, Search, Download, X, BarChart3, ShoppingBag, DollarSign, Package, AlertTriangle, Pencil, FileDown, Trash2, RotateCcw, ChevronDown, ChevronUp, Archive, History, ArrowRightLeft } from 'lucide-react';
 import PlanillasPanel from './PlanillasPanel';
 import type { Profile, AdminSale, EditForm } from '../../types';
 import { jsPDF } from 'jspdf';
@@ -55,9 +55,18 @@ export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedo
     showArchived, setShowArchived,
     archivedSales, archiveLoading,
     loadArchivedSales, archivarTodo, desarchivarTodo,
+    transferDates,
   } = useAdmin();
 
   const [activeTab, setActiveTab] = useState<'ventas' | 'planillas'>('ventas');
+
+  // ── Traspaso de fechas ──
+  const [showTransfer, setShowTransfer] = useState(false);
+  const [transferFrom, setTransferFrom] = useState('');
+  const [transferTo, setTransferTo] = useState('');
+  const [transferVendor, setTransferVendor] = useState('');
+  const [transferring, setTransferring] = useState(false);
+  const [transferMsg, setTransferMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [historyClient, setHistoryClient] = useState<{ nom: string; cel: string } | null>(null);
   const [showDeleted, setShowDeleted] = useState(false);
   const clientHistory = historyClient
@@ -1037,7 +1046,62 @@ export default function AdminDashboard({ adminName, onSignOut, onSwitchToVendedo
             <RefreshCw size={13} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
             {loading ? 'Cargando...' : 'Actualizar'}
           </button>
+          <button onClick={() => { setShowTransfer(p => !p); setTransferMsg(null); }}
+            style={{ ...btn('ghost'), color: '#a78bfa', border: '1px solid rgba(167,139,250,0.25)', background: showTransfer ? 'rgba(167,139,250,0.1)' : undefined }}>
+            <ArrowRightLeft size={13} /> Traspasar fechas
+          </button>
         </div>
+
+        {/* ── Panel traspaso de fechas ── */}
+        {showTransfer && (
+          <div style={{ background: 'rgba(167,139,250,0.06)', border: '1.5px solid rgba(167,139,250,0.25)', borderRadius: '12px', padding: '1rem 1.25rem', marginBottom: '0.75rem' }}>
+            <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem' }}>
+              Traspasar registros de una fecha a otra
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Fecha origen</div>
+                <input type="date" value={transferFrom} onChange={e => { setTransferFrom(e.target.value); setTransferMsg(null); }}
+                  style={{ ...iStyle, borderColor: 'rgba(167,139,250,0.4)' }} />
+              </div>
+              <ArrowRightLeft size={14} style={{ color: '#a78bfa', marginBottom: '0.5rem', flexShrink: 0 }} />
+              <div>
+                <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Fecha destino</div>
+                <input type="date" value={transferTo} onChange={e => { setTransferTo(e.target.value); setTransferMsg(null); }}
+                  style={{ ...iStyle, borderColor: 'rgba(167,139,250,0.4)' }} />
+              </div>
+              <div>
+                <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Vendedor (opcional)</div>
+                <select value={transferVendor} onChange={e => setTransferVendor(e.target.value)}
+                  style={{ ...iStyle, borderColor: 'rgba(167,139,250,0.4)', minWidth: '160px' }}>
+                  <option value="">Todos los vendedores</option>
+                  {profiles.map(p => <option key={p.id} value={p.id}>{p.full_name}</option>)}
+                </select>
+              </div>
+              <button
+                disabled={!transferFrom || !transferTo || transferFrom === transferTo || transferring}
+                onClick={async () => {
+                  if (!window.confirm(`¿Mover TODAS las ventas del ${transferFrom} al ${transferTo}${transferVendor ? ` (solo vendedor seleccionado)` : ''}?`)) return;
+                  setTransferring(true);
+                  setTransferMsg(null);
+                  const res = await transferDates(transferFrom, transferTo, transferVendor);
+                  setTransferring(false);
+                  setTransferMsg(res.ok
+                    ? { ok: true,  text: `${res.count} registro${res.count !== 1 ? 's' : ''} traspasado${res.count !== 1 ? 's' : ''} correctamente` }
+                    : { ok: false, text: res.error ?? 'Error al traspasar' });
+                }}
+                style={{ ...btn('accent'), background: 'rgba(167,139,250,0.18)', color: '#a78bfa', border: '1.5px solid rgba(167,139,250,0.4)', opacity: (!transferFrom || !transferTo || transferFrom === transferTo) ? 0.45 : 1 }}>
+                {transferring ? <RefreshCw size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <ArrowRightLeft size={13} />}
+                {transferring ? 'Traspasando...' : 'Traspasar'}
+              </button>
+            </div>
+            {transferMsg && (
+              <div style={{ marginTop: '0.6rem', fontSize: '0.78rem', fontWeight: 700, color: transferMsg.ok ? '#4ade80' : '#f87171', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                {transferMsg.ok ? '✓' : '✗'} {transferMsg.text}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── Filtros ── */}
         {showFilters && (

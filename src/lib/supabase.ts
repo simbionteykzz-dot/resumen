@@ -137,6 +137,18 @@ export async function desarchivarTodasVentas(): Promise<boolean> {
   return !error;
 }
 
+export async function transferSalesByDate(
+  fromDate: string,
+  toDate: string,
+  userId?: string,
+): Promise<{ ok: boolean; count: number; error?: string }> {
+  let query = supabase.from('ventas').update({ fecha: toDate }).eq('fecha', fromDate);
+  if (userId) query = query.eq('user_id', userId);
+  const { data, error } = await query.select('id');
+  if (error) return { ok: false, count: 0, error: error.message };
+  return { ok: true, count: (data ?? []).length };
+}
+
 export function ventaFromDBRaw(row: VentaDB): Sale {
   return {
     cel: row.cel,

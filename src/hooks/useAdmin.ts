@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { supabase, getAllSalesAdmin, getAllProfiles, anularVentaDB, updateVentaDB, ventaFromDBRaw, softDeleteVenta, restoreVentaDB, archivarTodasVentas, desarchivarTodasVentas, getArchivedSalesAdmin } from '../lib/supabase';
+import { supabase, getAllSalesAdmin, getAllProfiles, anularVentaDB, updateVentaDB, ventaFromDBRaw, softDeleteVenta, restoreVentaDB, archivarTodasVentas, desarchivarTodasVentas, getArchivedSalesAdmin, transferSalesByDate } from '../lib/supabase';
 import type { AdminSale, Profile, VendorStats } from '../types';
 import type { VentaDB } from '../lib/supabase';
 import { getCodigoProducto } from '../lib/data';
@@ -314,6 +314,12 @@ export function useAdmin() {
     return ok;
   };
 
+  const transferDates = async (fromDate: string, toDate: string, vendorId?: string) => {
+    const result = await transferSalesByDate(fromDate, toDate, vendorId || undefined);
+    if (result.ok) await loadData();
+    return result;
+  };
+
   return {
     allSales, filteredSales, paginatedSales, profiles, loading,
     dateFrom, setDateFrom, dateTo, setDateTo,
@@ -336,5 +342,6 @@ export function useAdmin() {
     showArchived, setShowArchived,
     archivedSales, archiveLoading,
     loadArchivedSales, archivarTodo, desarchivarTodo,
+    transferDates,
   };
 }
